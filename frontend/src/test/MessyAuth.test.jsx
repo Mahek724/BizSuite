@@ -44,3 +44,7 @@ describe("MessyAuth", () => {
     );
   });
 });
+
+
+https://github.com/gamekeepers/snake-cli
+git remote add upstream https://github.com/gamekeepers/snake-cli.git
