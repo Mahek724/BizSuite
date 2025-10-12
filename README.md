@@ -16,7 +16,7 @@ It helps small businesses and startups centralize client, lead, task, and activi
   - Assign staff to clients.  
 
 - *Leads Management*
-  - Kanban pipeline → New → Contacted → Negotiation → Won/Lost.  
+  - Kanban pipeline → New → Contacted → Deal → Won/Lost.  
   - Drag-and-drop leads between stages.  
   - Lead profiles with notes and activity timeline.  
 
