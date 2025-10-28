@@ -11,6 +11,8 @@ import {
   FaFilter,
   FaChevronDown,
   FaClock,
+  FaTags,
+  FaEnvelope,
   FaTag,
   FaStickyNote,
 } from "react-icons/fa";
@@ -227,73 +229,118 @@ const Notes = () => {
         <div className="p-6 overflow-y-auto h-[calc(100vh-80px)]">
           {/* Header Section */}
           <motion.div
-            className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 bg-white rounded-2xl p-6 shadow-sm"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="mb-4 lg:mb-0">
-              <h1 className="text-3xl font-bold text-gray-800">Notes</h1>
-              <p className="text-gray-500 text-sm mt-1">
-                Capture ideas and important information
-              </p>
-            </div>
-            <button
-              className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-              onClick={handleAddNote}
-            >
-              <FaPlus className="w-4 h-4" />
-              Add Note
-            </button>
-          </motion.div>
+  className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
+  initial={{ opacity: 0, y: -20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+>
+  <div className="mb-4 lg:mb-0">
+    <h1
+      className="text-xl font-semibold tracking-wide"
+      style={{
+        color: "#B5828C",
+        fontFamily: "'Raleway', sans-serif",
+      }}
+    >
+      Capture and manage your notes
+    </h1>
+    <p className="text-gray-500 text-sm mt-1">
+      Capture ideas and important information
+    </p>
+  </div>
+
+  <button
+    className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+    onClick={handleAddNote}
+  >
+    <FaPlus className="w-4 h-4" />
+    Add Note
+  </button>
+</motion.div>
 
           {/* Filters Section */}
           <motion.div
-            className="bg-white rounded-2xl p-6 shadow-sm mb-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <FaFilter className="text-rose-400" />
-              <span className="font-semibold text-gray-700">Filters</span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="relative">
-                <select
-                  className="w-full appearance-none bg-white border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                  value={filters.category}
-                  onChange={(e) =>
-                    setFilters({ ...filters, category: e.target.value })
-                  }
-                >
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-                <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
+  className="bg-white rounded-2xl p-4 md:p-6 shadow-sm mb-6 border border-gray-100"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.2 }}
+>
+  {/* Stylish Title */}
+  <div className="flex items-center gap-2 mb-4">
+    <FaFilter className="text-[#E50046] w-5 h-5" />
+    <h2
+      className="text-lg font-bold"
+      style={{
+        fontFamily: "'Raleway', sans-serif",
+        color: "#E50046",
+      }}
+    >
+      Filter Notes
+    </h2>
+  </div>
 
-              <div className="relative">
-                <select
-                  className="w-full appearance-none bg-white border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                  value={filters.sortBy}
-                  onChange={(e) =>
-                    setFilters({ ...filters, sortBy: e.target.value })
-                  }
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-          </motion.div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* Category Dropdown */}
+<div className="relative">
+  <button
+    onClick={() =>
+      setFilters((prev) => ({
+        ...prev,
+        openCategory: !prev.openCategory,
+      }))
+    }
+    className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] shadow-sm cursor-pointer"
+  >
+    <span className="text-sm font-medium">{filters.category}</span>
+    <FaChevronDown className="ml-2 text-[#E50046]" />
+  </button>
+  {filters.openCategory && (
+    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+      {categories.map((category) => (
+        <div
+          key={category}
+          onClick={() => {
+            setFilters({ ...filters, category, openCategory: false });
+          }}
+          className="px-4 py-2 text-gray-700 hover:bg-rose-100 cursor-pointer transition-colors"
+        >
+          {category}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+{/* Sort By Dropdown */}
+<div className="relative">
+  <button
+    onClick={() =>
+      setFilters((prev) => ({
+        ...prev,
+        openSort: !prev.openSort,
+      }))
+    }
+    className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] shadow-sm cursor-pointer"
+  >
+    <span className="text-sm font-medium">{filters.sortBy}</span>
+    <FaChevronDown className="ml-2 text-[#E50046]" />
+  </button>
+  {filters.openSort && (
+    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+      {sortOptions.map((option) => (
+        <div
+          key={option}
+          onClick={() => setFilters({ ...filters, sortBy: option, openSort: false })}
+          className="px-4 py-2 text-gray-700 hover:bg-rose-100 cursor-pointer transition-colors"
+        >
+          {option}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+</div>
+</motion.div>
 
           {/* Pinned Notes Section */}
           {pinnedNotes.length > 0 && (
@@ -358,28 +405,37 @@ const Notes = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => handleViewDetails(note)}
-                        className="flex-1 flex items-center justify-center gap-1 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-700 py-2 rounded-lg transition-all text-sm font-medium"
-                      >
-                        <FaEye className="w-3.5 h-3.5" />
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleEditNote(note)}
-                        className="flex-1 flex items-center justify-center gap-1 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-700 py-2 rounded-lg transition-all text-sm font-medium"
-                      >
-                        <FaEdit className="w-3.5 h-3.5" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteConfirm(note)}
-                        className="flex items-center justify-center gap-1 bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white px-3 py-2 rounded-lg transition-all text-sm"
-                      >
-                        <FaTrash className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    {/* Action Buttons - Always Visible */}
+{/* Action Buttons - Always Visible with Different Colors */}
+<div className="flex gap-2 mt-4">
+  {/* View Button - Blue */}
+  <button
+    onClick={() => handleViewDetails(note)}
+    className="flex-1 flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+  >
+    <FaEye className="w-3.5 h-3.5" />
+    
+  </button>
+
+  {/* Edit Button - Green */}
+  <button
+    onClick={() => handleEditNote(note)}
+    className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+  >
+    <FaEdit className="w-3.5 h-3.5" />
+  
+  </button>
+
+  {/* Delete Button - Red */}
+  <button
+    onClick={() => handleDeleteConfirm(note)}
+    className="flex-1 flex items-center justify-center gap-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+  >
+    <FaTrash className="w-3.5 h-3.5" />
+    
+  </button>
+</div>
+
                   </motion.div>
                 ))}
               </div>
@@ -443,28 +499,37 @@ const Notes = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleViewDetails(note)}
-                      className="flex-1 flex items-center justify-center gap-1 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-700 py-2 rounded-lg transition-all text-sm font-medium"
-                    >
-                      <FaEye className="w-3.5 h-3.5" />
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleEditNote(note)}
-                      className="flex-1 flex items-center justify-center gap-1 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-700 py-2 rounded-lg transition-all text-sm font-medium"
-                    >
-                      <FaEdit className="w-3.5 h-3.5" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteConfirm(note)}
-                      className="flex items-center justify-center gap-1 bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white px-3 py-2 rounded-lg transition-all text-sm"
-                    >
-                      <FaTrash className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  {/* Action Buttons - Always Visible */}
+{/* Action Buttons - Always Visible with Different Colors */}
+<div className="flex gap-2 mt-4">
+  {/* View Button - Blue */}
+  <button
+    onClick={() => handleViewDetails(note)}
+    className="flex-1 flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+  >
+    <FaEye className="w-3.5 h-3.5" />
+    
+  </button>
+
+  {/* Edit Button - Green */}
+  <button
+    onClick={() => handleEditNote(note)}
+    className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+  >
+    <FaEdit className="w-3.5 h-3.5" />
+    
+  </button>
+
+  {/* Delete Button - Red */}
+  <button
+    onClick={() => handleDeleteConfirm(note)}
+    className="flex-1 flex items-center justify-center gap-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+  >
+    <FaTrash className="w-3.5 h-3.5" />
+    
+  </button>
+</div>
+
                 </motion.div>
               ))}
             </div>
@@ -474,271 +539,288 @@ const Notes = () => {
 
       {/* Add/Edit Modal */}
       <AnimatePresence>
-        {(isAddFormOpen || isEditFormOpen) && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeModal}
+  {(isAddFormOpen || isEditFormOpen) && (
+    <motion.div
+      className="fixed inset-0 flex items-center justify-center bg-transparent backdrop-blur-[2px] z-50 p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={closeModal}
+    >
+      <motion.div
+        className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-[#F5E3E0]"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="text-center pt-8 px-6 pb-4 border-b border-gray-100">
+          <h2
+            className="text-2xl font-semibold tracking-wide"
+            style={{ color: "#B5828C", fontFamily: "'Raleway', sans-serif" }}
           >
-            <motion.div
-              className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {isAddFormOpen ? "Add New Note" : "Edit Note"}
-                </h2>
-                <button
-                  className="w-10 h-10 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 rounded-full transition-all hover:rotate-90"
-                  onClick={closeModal}
+            {isAddFormOpen ? "Add New Note" : "Edit Note"}
+          </h2>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSaveNote} className="p-6 space-y-6">
+          {/* Title */}
+          <div>
+            <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+              <FaTags className="text-rose-400" /> Title
+            </label>
+            <input
+              type="text"
+              value={selectedNote?.title || ""}
+              onChange={(e) =>
+                setSelectedNote({ ...selectedNote, title: e.target.value })
+              }
+              placeholder="Enter note title"
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all"
+            />
+          </div>
+
+          {/* Content */}
+          <div>
+            <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+              <FaEnvelope className="text-rose-400" /> Content
+            </label>
+            <textarea
+              value={selectedNote?.content || ""}
+              onChange={(e) =>
+                setSelectedNote({ ...selectedNote, content: e.target.value })
+              }
+              placeholder="Enter note content"
+              rows="6"
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all"
+            />
+          </div>
+
+          {/* Category & Color */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                <FaTags className="text-rose-400" /> Category
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedNote?.category || "Personal"}
+                  onChange={(e) =>
+                    setSelectedNote({ ...selectedNote, category: e.target.value })
+                  }
+                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
                 >
-                  <FaTimes />
-                </button>
+                  {categories
+                    .filter((c) => c !== "All Categories")
+                    .map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                </select>
+                <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
+            </div>
 
-              <form onSubmit={handleSaveNote} className="p-6">
-                <div className="mb-6">
-                  <label className="text-gray-700 font-semibold mb-2 block">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedNote?.title || ""}
-                    onChange={(e) =>
-                      setSelectedNote({
-                        ...selectedNote,
-                        title: e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all"
-                    placeholder="Enter note title"
-                  />
-                </div>
-
-                <div className="mb-6">
-                  <label className="text-gray-700 font-semibold mb-2 block">
-                    Content
-                  </label>
-                  <textarea
-                    value={selectedNote?.content || ""}
-                    onChange={(e) =>
-                      setSelectedNote({
-                        ...selectedNote,
-                        content: e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all"
-                    placeholder="Enter note content"
-                    rows="6"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <label className="text-gray-700 font-semibold mb-2 block">
-                      Category
-                    </label>
-                    <div className="relative">
-                      <select
-                        className="w-full appearance-none border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                        value={selectedNote?.category || "Personal"}
-                        onChange={(e) =>
-                          setSelectedNote({
-                            ...selectedNote,
-                            category: e.target.value,
-                          })
-                        }
-                      >
-                        {categories
-                          .filter((c) => c !== "All Categories")
-                          .map((category) => (
-                            <option key={category} value={category}>
-                              {category}
-                            </option>
-                          ))}
-                      </select>
-                      <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-gray-700 font-semibold mb-2 block">
-                      Color
-                    </label>
-                    <div className="flex gap-2 flex-wrap">
-                      {noteColors.map((color) => (
-                        <button
-                          key={color.value}
-                          type="button"
-                          onClick={() =>
-                            setSelectedNote({
-                              ...selectedNote,
-                              color: color.value,
-                            })
-                          }
-                          className={`w-10 h-10 rounded-full border-2 transition-all ${
-                            selectedNote?.color === color.value
-                              ? "border-rose-500 scale-110"
-                              : "border-gray-300"
-                          }`}
-                          style={{ backgroundColor: color.value }}
-                          title={color.name}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {error && (
-                  <p className="text-red-500 text-sm mb-4 bg-red-50 p-3 rounded-lg">
-                    {error}
-                  </p>
-                )}
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <div>
+              <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                <FaTags className="text-rose-400" /> Color
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {noteColors.map((color) => (
                   <button
+                    key={color.value}
                     type="button"
-                    onClick={closeModal}
-                    className="px-8 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-8 py-3 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
-                  >
-                    {isAddFormOpen ? "Add Note" : "Save Changes"}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    onClick={() =>
+                      setSelectedNote({ ...selectedNote, color: color.value })
+                    }
+                    className={`w-10 h-10 rounded-full border-2 transition-all ${
+                      selectedNote?.color === color.value
+                        ? "border-rose-500 scale-110"
+                        : "border-gray-300"
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg text-sm transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg text-sm transition-all"
+            >
+              {isAddFormOpen ? "Add Note" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {/* Details Modal */}
       <AnimatePresence>
-        {isDetailsOpen && selectedNote && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+  {isDetailsOpen && selectedNote && (
+    <motion.div
+      className="fixed inset-0 flex items-center justify-center bg-transparent backdrop-blur-[2px] z-50 p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={closeModal}
+    >
+      <motion.div
+        className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-[#F5E3E0]"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+          <h2
+            className="text-2xl font-semibold tracking-wide"
+            style={{ color: "#B5828C", fontFamily: "'Raleway', sans-serif" }}
+          >
+            Note Details
+          </h2>
+          <button
+            className="w-10 h-10 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 rounded-full transition-all hover:rotate-90"
             onClick={closeModal}
           >
-            <motion.div
-              className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Note Details
-                </h2>
-                <button
-                  className="w-10 h-10 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 rounded-full transition-all hover:rotate-90"
-                  onClick={closeModal}
-                >
-                  <FaTimes />
-                </button>
-              </div>
+            <FaTimes />
+          </button>
+        </div>
 
-              <div className="p-6">
-                <div
-                  className="rounded-2xl p-6 mb-6"
-                  style={{ backgroundColor: selectedNote.color }}
-                >
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                    {selectedNote.title}
-                  </h3>
-                  <p className="text-gray-700 whitespace-pre-wrap">
-                    {selectedNote.content}
-                  </p>
-                </div>
+        {/* Details Body */}
+        <div className="p-6 space-y-5">
+          <div
+            className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50"
+            style={{ backgroundColor: selectedNote.color }}
+          >
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              {selectedNote.title}
+            </h3>
+            <p className="text-gray-700 whitespace-pre-wrap">
+              {selectedNote.content}
+            </p>
+          </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <FaTag className="text-rose-400" />
-                    <span className="font-semibold text-gray-600">
-                      Category:
-                    </span>
-                    <span className="text-gray-800">
-                      {selectedNote.category}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FaClock className="text-rose-400" />
-                    <span className="font-semibold text-gray-600">
-                      Created:
-                    </span>
-                    <span className="text-gray-800">
-                      {selectedNote.createdAt}
-                    </span>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                <FaTags className="text-rose-400" /> Category
+              </label>
+              <div className="text-base text-gray-800 border-2 border-gray-200 px-4 py-2.5 rounded-lg bg-gray-50">
+                {selectedNote.category}
               </div>
+            </div>
 
-              <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
-                <button
-                  onClick={closeModal}
-                  className="px-8 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all"
-                >
-                  Close
-                </button>
+            <div>
+              <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                <FaClock className="text-rose-400" /> Created At
+              </label>
+              <div className="text-base text-gray-800 border-2 border-gray-200 px-4 py-2.5 rounded-lg bg-gray-50">
+                {selectedNote.createdAt}
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
+          <button
+            onClick={closeModal}
+            className="px-5 py-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg text-sm transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
-        {deleteConfirm && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+  {deleteConfirm && (
+    <motion.div
+      className="fixed inset-0 flex items-center justify-center bg-transparent backdrop-blur-[2px] z-50 p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-[#F5E3E0]"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+          <h2
+            className="text-2xl font-semibold tracking-wide"
+            style={{ color: "#B5828C", fontFamily: "'Raleway', sans-serif" }}
           >
-            <motion.div
-              className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+            Confirm Delete
+          </h2>
+          <button
+            className="w-10 h-10 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 rounded-full transition-all hover:rotate-90"
+            onClick={() => setDeleteConfirm(null)}
+          >
+            <FaTimes />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6">
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            Are you sure you want to delete{" "}
+            <strong className="text-gray-800">
+              {deleteConfirm.name || deleteConfirm.title}
+            </strong>?<br />
+            This action cannot be undone.
+          </p>
+
+          {/* Footer Buttons */}
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setDeleteConfirm(null)}
+              className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
             >
-              <h2 className="text-2xl font-bold text-gray-800 mb-3">
-                Confirm Delete
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete{" "}
-                <strong>{deleteConfirm.title}</strong>? This action cannot be
-                undone.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
-                >
-                  Delete
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-5 py-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
     </div>
   );
 };

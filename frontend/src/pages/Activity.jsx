@@ -321,26 +321,36 @@ const Activity = () => {
         {/* Main Content Area - NO PADDING, FULL WIDTH */}
         <div className="flex-1 overflow-y-auto bg-gray-50">
           {/* Header Section */}
-          <motion.div
-            className="flex flex-col lg:flex-row justify-between items-start lg:items-center p-6 bg-white border-b"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Activity</h1>
-              <p className="text-gray-500 text-sm mt-1">
-                Track all CRM activities and updates
-              </p>
-            </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 mt-4 lg:mt-0"
-            >
-              <FaPlus className="w-4 h-4" />
-              <span>Add Activity</span>
-            </button>
-          </motion.div>
+         <motion.div
+  className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
+  initial={{ opacity: 0, y: -20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+>
+  <div className="mb-4 lg:mb-0">
+    <h1
+      className="text-xl font-semibold tracking-wide"
+      style={{
+        color: "#B5828C",
+        fontFamily: "'Raleway', sans-serif",
+      }}
+    >
+      Track and manage your activities
+    </h1>
+    <p className="text-gray-500 text-sm mt-1">
+      Monitor CRM updates and interactions effectively
+    </p>
+  </div>
+
+  <button
+    onClick={() => setShowAddModal(true)}
+    className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+  >
+    <FaPlus className="w-4 h-4" />
+    Add Activity
+  </button>
+</motion.div>
+
 
           {/* Summary Stats Cards - Full Width with padding */}
           <div className="p-6">
@@ -418,95 +428,103 @@ const Activity = () => {
           {/* Filters Section */}
           <div className="px-6 pb-6">
             <motion.div
-              className="bg-white rounded-2xl p-6 shadow-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                <div className="flex items-center gap-2">
-                  <FaFilter className="text-rose-400" />
-                  <span className="font-semibold text-gray-700">
-                    Filters & Sort
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSortBy("newest")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      sortBy === "newest"
-                        ? "bg-rose-400 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    Newest First
-                  </button>
-                  <button
-                    onClick={() => setSortBy("oldest")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      sortBy === "oldest"
-                        ? "bg-rose-400 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    Oldest First
-                  </button>
-                </div>
-              </div>
+  className="bg-white rounded-2xl p-4 md:p-6 shadow-sm mb-6 border border-gray-100"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.2 }}
+>
+  {/* Stylish Title */}
+  <div className="flex items-center gap-2 mb-4">
+    <FaFilter className="text-[#E50046] w-5 h-5" />
+    <h2
+      className="text-lg font-bold"
+      style={{
+        fontFamily: "'Raleway', sans-serif",
+        color: "#E50046",
+      }}
+    >
+      Filter Activities
+    </h2>
+  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <select
-                    className="w-full appearance-none bg-white border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                    value={filters.activityType}
-                    onChange={(e) =>
-                      setFilters({ ...filters, activityType: e.target.value })
-                    }
-                  >
-                    {activityTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                  <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
+  {/* Sort Buttons */}
+  <div className="flex items-center gap-3 mb-6 flex-wrap">
+    <button
+      onClick={() => setSortBy("newest")}
+      className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all duration-300 ${
+        sortBy === "newest"
+          ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white shadow-md hover:shadow-lg"
+          : "bg-[#FFF0BD] border-[#FDAB9E] text-[#E50046] hover:bg-rose-100"
+      }`}
+    >
+      Newest First
+    </button>
+    <button
+      onClick={() => setSortBy("oldest")}
+      className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all duration-300 ${
+        sortBy === "oldest"
+          ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white shadow-md hover:shadow-lg"
+          : "bg-[#FFF0BD] border-[#FDAB9E] text-[#E50046] hover:bg-rose-100"
+      }`}
+    >
+      Oldest First
+    </button>
+  </div>
 
-                <div className="relative">
-                  <select
-                    className="w-full appearance-none bg-white border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                    value={filters.user}
-                    onChange={(e) =>
-                      setFilters({ ...filters, user: e.target.value })
-                    }
-                  >
-                    {users.map((user) => (
-                      <option key={user} value={user}>
-                        {user}
-                      </option>
-                    ))}
-                  </select>
-                  <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
+  {/* Filters Section */}
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {/* Activity Type Dropdown */}
+    <div className="relative">
+      <select
+        className="w-full appearance-none border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] font-medium focus:border-[#E50046] focus:ring-2 focus:ring-rose-100 outline-none cursor-pointer transition-all"
+        value={filters.activityType}
+        onChange={(e) =>
+          setFilters({ ...filters, activityType: e.target.value })
+        }
+      >
+        {activityTypes.map((type) => (
+          <option key={type} value={type}>
+            {type}
+          </option>
+        ))}
+      </select>
+      <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#E50046] pointer-events-none" />
+    </div>
 
-                <div className="relative">
-                  <select
-                    className="w-full appearance-none bg-white border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 text-gray-700 font-medium focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                    value={filters.dateRange}
-                    onChange={(e) =>
-                      setFilters({ ...filters, dateRange: e.target.value })
-                    }
-                  >
-                    {dateRanges.map((range) => (
-                      <option key={range} value={range}>
-                        {range}
-                      </option>
-                    ))}
-                  </select>
-                  <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-            </motion.div>
+    {/* User Dropdown */}
+    <div className="relative">
+      <select
+        className="w-full appearance-none border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] font-medium focus:border-[#E50046] focus:ring-2 focus:ring-rose-100 outline-none cursor-pointer transition-all"
+        value={filters.user}
+        onChange={(e) => setFilters({ ...filters, user: e.target.value })}
+      >
+        {users.map((user) => (
+          <option key={user} value={user}>
+            {user}
+          </option>
+        ))}
+      </select>
+      <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#E50046] pointer-events-none" />
+    </div>
+
+    {/* Date Range Dropdown */}
+    <div className="relative">
+      <select
+        className="w-full appearance-none border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] font-medium focus:border-[#E50046] focus:ring-2 focus:ring-rose-100 outline-none cursor-pointer transition-all"
+        value={filters.dateRange}
+        onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
+      >
+        {dateRanges.map((range) => (
+          <option key={range} value={range}>
+            {range}
+          </option>
+        ))}
+      </select>
+      <FaChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#E50046] pointer-events-none" />
+    </div>
+  </div>
+</motion.div>
+
           </div>
 
           {/* Pinned Activities Section */}
