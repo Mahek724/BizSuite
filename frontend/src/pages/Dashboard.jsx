@@ -119,7 +119,9 @@ const Dashboard = () => {
           </div>
 
           {/* ✅ Scrollable content area (overflow moved here) */}
-          <div className="px-32 py-4 space-y-8 w-full overflow-y-auto">
+          {/* <div className="px-32 py-4 space-y-8 w-full overflow-y-auto"> */}
+          <div className="px-10 lg:px-20 xl:px-24 2xl:px-28 py-6 space-y-8 w-full overflow-y-auto max-w-[1800px] mx-auto">
+
             
 
             {/* Rest of your Dashboard content */}
@@ -130,7 +132,9 @@ const Dashboard = () => {
 
           {/* Top Stat Cards */}
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-16"
+            // className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-16"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 xl:gap-14 2xl:gap-16"
+
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -139,7 +143,7 @@ const Dashboard = () => {
                 key={i}
                 whileHover={{ scale: 1.03 }}
                 transition={{ type: "spring", stiffness: 280 }}
-                className="bg-white p-3 rounded-2xl shadow-sm border border-[#f1e4e1] w-[115%]"
+                className="bg-white p-3 rounded-2xl shadow-sm border border-[#f1e4e1] w-full" //w-[115%]"
 
               >
                 <div className="flex items-center gap-4">

@@ -79,6 +79,8 @@ const Tasks = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
+const [showAssignedDropdown, setShowAssignedDropdown] = useState(false);
   const [error, setError] = useState("");
 
   const [filters, setFilters] = useState({
@@ -655,22 +657,45 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
               />
             </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-                Priority
-              </label>
-              <select
-                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                value={selectedTask?.priority || "Medium"}
-                onChange={(e) =>
-                  setSelectedTask({ ...selectedTask, priority: e.target.value })
-                }
-              >
-                <option>High</option>
-                <option>Medium</option>
-                <option>Low</option>
-              </select>
-            </div>
+            <div className="relative">
+  <button
+    type="button"
+    onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
+  >
+    {selectedTask?.priority || "Select Priority"}
+    <FaChevronDown
+      className={`transition-transform duration-300 ${
+        showPriorityDropdown ? "rotate-180" : ""
+      } text-gray-400`}
+    />
+  </button>
+
+  <AnimatePresence>
+    {showPriorityDropdown && (
+      <motion.ul
+        className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+      >
+        {["High", "Medium", "Low"].map((priority) => (
+          <li
+            key={priority}
+            onClick={() => {
+              setSelectedTask({ ...selectedTask, priority });
+              setShowPriorityDropdown(false);
+            }}
+            className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all"
+          >
+            {priority}
+          </li>
+        ))}
+      </motion.ul>
+    )}
+  </AnimatePresence>
+</div>
+
           </div>
 
           {/* Assigned To */}
@@ -678,16 +703,45 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
             <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
               Assigned To
             </label>
-            <select
-              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-              value={selectedTask?.assignedTo || "John Doe"}
-              onChange={(e) =>
-                setSelectedTask({ ...selectedTask, assignedTo: e.target.value })
-              }
-            >
-              <option>John Doe</option>
-              <option>Jane Smith</option>
-            </select>
+            <div className="relative">
+  <button
+    type="button"
+    onClick={() => setShowAssignedDropdown(!showAssignedDropdown)}
+    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
+  >
+    {selectedTask?.assignedTo || "Select Person"}
+    <FaChevronDown
+      className={`transition-transform duration-300 ${
+        showAssignedDropdown ? "rotate-180" : ""
+      } text-gray-400`}
+    />
+  </button>
+
+  <AnimatePresence>
+    {showAssignedDropdown && (
+      <motion.ul
+        className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+      >
+        {["John Doe", "Jane Smith"].map((person) => (
+          <li
+            key={person}
+            onClick={() => {
+              setSelectedTask({ ...selectedTask, assignedTo: person });
+              setShowAssignedDropdown(false);
+            }}
+            className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all"
+          >
+            {person}
+          </li>
+        ))}
+      </motion.ul>
+    )}
+  </AnimatePresence>
+</div>
+
           </div>
 
           {/* Error */}
