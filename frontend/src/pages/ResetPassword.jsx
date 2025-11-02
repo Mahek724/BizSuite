@@ -18,7 +18,7 @@ export default function ResetPassword() {
     }
 
     try {
-      await api.post(`/auth/reset-password/${token}`, { newPassword: password });
+      await api.post(`/auth/reset-password/₹{token}`, { newPassword: password });
       alert("Password updated successfully! Please login.");
       navigate("/login");
     } catch (err) {

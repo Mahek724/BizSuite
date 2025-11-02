@@ -130,7 +130,7 @@ router.get("/google/callback",
       role: req.user.role,
       name: req.user.fullName,
     });
-    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
+    res.redirect(`₹{process.env.FRONTEND_URL}/auth/success?token=₹{token}`);
   }
 );
 
@@ -149,7 +149,7 @@ router.post("/forgot-password", async (req, res) => {
     user.resetToken = resetToken;
     await user.save();
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `₹{process.env.FRONTEND_URL}/reset-password/₹{resetToken}`;
     console.log("Sending password reset email to:", email, "URL:", resetUrl);
 
     const transporter = nodemailer.createTransport({
@@ -164,7 +164,7 @@ router.post("/forgot-password", async (req, res) => {
       await transporter.sendMail({
         to: email,
         subject: "Password Reset",
-        text: `Click here to reset your password: ${resetUrl}`,
+        text: `Click here to reset your password: ₹{resetUrl}`,
       });
     } catch (mailErr) {
       console.error("Nodemailer error:", mailErr);

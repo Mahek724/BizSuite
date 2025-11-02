@@ -13,7 +13,7 @@ import {
   FaDollarSign,
   FaShareAlt,
   FaBullhorn,
-  FaFlagCheckered,
+  FaFlag,
   FaEdit,
   FaUser,
   FaGripVertical,
@@ -92,10 +92,10 @@ const Leads = () => {
   const [viewMode, setViewMode] = useState("kanban");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-
-  
-
-  
+  const [isStageOpen, setIsStageOpen] = useState(false);
+  const [isSourceOpen, setIsSourceOpen] = useState(false);
+  const [isAssignDropdownOpen, setIsAssignDropdownOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   const [filters, setFilters] = useState({
     stage: "All Stages",
@@ -288,7 +288,7 @@ const Leads = () => {
   <div className="flex items-center gap-3">
     <div className="flex bg-gray-100 rounded-lg p-1">
       <button
-        className={`p-2 rounded-md transition-all ${
+        className={`p-2 rounded-md transition-all ₹{
           viewMode === "kanban"
             ? "bg-white text-rose-400 shadow-sm"
             : "text-gray-500"
@@ -298,7 +298,7 @@ const Leads = () => {
         <FaTh className="w-5 h-5" />
       </button>
       <button
-        className={`p-2 rounded-md transition-all ${
+        className={`p-2 rounded-md transition-all ₹{
           viewMode === "list"
             ? "bg-white text-rose-400 shadow-sm"
             : "text-gray-500"
@@ -473,7 +473,7 @@ const Leads = () => {
               {getLeadsByStage(stage).map((lead) => (
                 <motion.div
                   key={lead.id}
-                  className={`bg-white rounded-xl p-4 border-l-4 ${getStageBorderColor(
+                  className={`bg-white rounded-xl p-4 border-l-4 ₹{getStageBorderColor(
                     stage
                   )} cursor-move shadow-sm hover:shadow-md transition-all duration-200`}
                   draggable
@@ -502,7 +502,7 @@ const Leads = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <FaDollarSign className="text-rose-400 w-3 h-3 flex-shrink-0" />
-                      <span>${lead.value.toLocaleString()}</span>
+                      <span>₹{lead.value.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <FaUser className="text-rose-400 w-3 h-3 flex-shrink-0" />
@@ -627,7 +627,7 @@ const Leads = () => {
               <td className="py-3 px-4">
                 <div className="flex items-center gap-2">
                   <FaDollarSign className="text-rose-400" />
-                  ${lead.value.toLocaleString()}
+                  ₹{lead.value.toLocaleString()}
                 </div>
               </td>
 
@@ -650,7 +650,7 @@ const Leads = () => {
               {/* 🚩 Stage with color badges */}
               <td className="py-3 px-4">
                 <span
-                  className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${stageClass}`}
+                  className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ₹{stageClass}`}
                 >
                   {lead.stage}
                 </span>
@@ -695,7 +695,7 @@ const Leads = () => {
 
 
           {/* Modals remain the same... */}
-          <AnimatePresence>
+         <AnimatePresence>
   {showAddModal && (
     <motion.div
       className="fixed inset-0 flex items-center justify-center bg-transparent backdrop-blur-[2px] z-50 p-4"
@@ -726,6 +726,7 @@ const Leads = () => {
 
         {/* Form */}
         <form onSubmit={handleAddLead} className="p-6 space-y-6">
+          {/* Basic Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               { field: "name", label: "Lead Name", icon: <FaUser className="text-rose-400" /> },
@@ -743,9 +744,12 @@ const Leads = () => {
                   className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all"
                   value={formData[field]}
                   onChange={(e) =>
-                    setFormData({ ...formData, [field]: type === "number" ? parseInt(e.target.value) || 0 : e.target.value })
+                    setFormData({
+                      ...formData,
+                      [field]: type === "number" ? parseInt(e.target.value) || 0 : e.target.value,
+                    })
                   }
-                  placeholder={`Enter ${label.toLowerCase()}`}
+                  placeholder={`Enter ₹{label.toLowerCase()}`}
                 />
               </div>
             ))}
@@ -754,24 +758,42 @@ const Leads = () => {
           {/* Stage & Source */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { field: "stage", label: "Stage", options: stages.filter((s) => s !== "All Stages") },
-              { field: "source", label: "Source", options: sources.filter((s) => s !== "All Sources") },
-            ].map(({ field, label, options }, idx) => (
+              { field: "stage", label: "Stage", icon: <FaFlag className="text-rose-400" />, options: stages.filter((s) => s !== "All Stages") },
+              { field: "source", label: "Source", icon: <FaBullhorn className="text-rose-400" />, options: sources.filter((s) => s !== "All Sources") },
+            ].map(({ field, label, icon, options }, idx) => (
               <div key={idx}>
-                <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">{label}</label>
+                <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                  {icon} {label}
+                </label>
                 <div className="relative">
-                  <select
-                    className="w-full appearance-none border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                    value={formData[field]}
-                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                  <div
+                    className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
+                    onClick={() =>
+                      setOpenDropdown((prev) => (prev === field ? null : field))
+                    }
                   >
-                    {options.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                  <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <span className="text-sm font-medium">
+                      {formData[field] || `Select ₹{label}`}
+                    </span>
+                    <FaChevronDown className="ml-2 text-[#E50046]" />
+                  </div>
+
+                  {openDropdown === field && (
+                    <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-sm">
+                      {options.map((option) => (
+                        <div
+                          key={option}
+                          className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
+                          onClick={() => {
+                            setFormData({ ...formData, [field]: option });
+                            setOpenDropdown(null);
+                          }}
+                        >
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -779,24 +801,42 @@ const Leads = () => {
 
           {/* Assigned To */}
           <div>
-  <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-    <FaUser className="text-rose-400" /> Assigned To
-  </label>
-  <div className="relative">
-    <select
-      className="w-full appearance-none border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-      value={formData.assignedTo}
-      onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-    >
-      {staffMembers.filter((s) => s !== "All Staff").map((staff) => (
-        <option key={staff} value={staff}>
-          {staff}
-        </option>
-      ))}
-    </select>
-    <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-  </div>
-</div>
+            <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+              <FaUser className="text-rose-400" /> Assigned To
+            </label>
+            <div className="relative">
+              <div
+                className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
+                onClick={() =>
+                  setOpenDropdown((prev) => (prev === "assignedTo" ? null : "assignedTo"))
+                }
+              >
+                <span className="text-sm font-medium">
+                  {formData.assignedTo || "Select Staff"}
+                </span>
+                <FaChevronDown className="ml-2 text-[#E50046]" />
+              </div>
+
+              {openDropdown === "assignedTo" && (
+                <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-sm">
+                  {staffMembers
+                    .filter((s) => s !== "All Staff")
+                    .map((staff) => (
+                      <div
+                        key={staff}
+                        className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
+                        onClick={() => {
+                          setFormData({ ...formData, assignedTo: staff });
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        {staff}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
@@ -870,58 +910,138 @@ const Leads = () => {
                       [field]: type === "number" ? parseInt(e.target.value) || 0 : e.target.value,
                     })
                   }
-                  placeholder={`Enter ${label.toLowerCase()}`}
+                  placeholder={`Enter ₹{label.toLowerCase()}`}
                 />
               </div>
             ))}
           </div>
 
           {/* Stage & Source */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { field: "stage", label: "Stage", options: stages.filter((s) => s !== "All Stages") },
-              { field: "source", label: "Source", options: sources.filter((s) => s !== "All Sources") },
-            ].map(({ field, label, options }, idx) => (
-              <div key={idx}>
-                <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">{label}</label>
-                <div className="relative">
-                  <select
-                    className="w-full appearance-none border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                    value={formData[field]}
-                    onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                  >
-                    {options.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                  <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
+          {/* Stage, Source, and Assigned To — all styled like filter dropdown */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {/* Stage */}
+  <div>
+    <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+      <FaFlag className="text-rose-400" /> Stage
+    </label>
+    <div className="relative">
+      <div
+        className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
+        onClick={() => setIsStageOpen(!isStageOpen)}
+      >
+        <span className="text-sm font-medium">
+          {formData.stage || "Select a stage"}
+        </span>
+        <FaChevronDown
+          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ₹{
+            isStageOpen ? "rotate-180" : ""
+          }`}
+        />
+      </div>
+
+      {isStageOpen && (
+        <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-md overflow-hidden">
+          {stages
+            .filter((s) => s !== "All Stages")
+            .map((stage) => (
+              <div
+                key={stage}
+                className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
+                onClick={() => {
+                  setFormData({ ...formData, stage });
+                  setIsStageOpen(false);
+                }}
+              >
+                {stage}
               </div>
             ))}
-          </div>
+        </div>
+      )}
+    </div>
+  </div>
 
-          {/* Assigned To */}
-          <div>
-            <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-              <FaUser className="text-rose-400" /> Assigned To
-            </label>
-            <div className="relative">
-              <select
-                className="w-full appearance-none border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                value={formData.assignedTo}
-                onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+  {/* Source */}
+  <div>
+    <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+      <FaBullhorn className="text-rose-400" /> Source
+    </label>
+    <div className="relative">
+      <div
+        className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
+        onClick={() => setIsSourceOpen(!isSourceOpen)}
+      >
+        <span className="text-sm font-medium">
+          {formData.source || "Select a source"}
+        </span>
+        <FaChevronDown
+          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ₹{
+            isSourceOpen ? "rotate-180" : ""
+          }`}
+        />
+      </div>
+
+      {isSourceOpen && (
+        <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-md overflow-hidden">
+          {sources
+            .filter((s) => s !== "All Sources")
+            .map((source) => (
+              <div
+                key={source}
+                className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
+                onClick={() => {
+                  setFormData({ ...formData, source });
+                  setIsSourceOpen(false);
+                }}
               >
-                {staffMembers.filter((s) => s !== "All Staff").map((staff) => (
-                  <option key={staff} value={staff}>
-                    {staff}
-                  </option>
-                ))}
-              </select>
-              <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
+                {source}
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+  {/* Assigned To */}
+  <div className="md:col-span-2">
+    <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+      <FaUser className="text-rose-400" /> Assigned To
+    </label>
+    <div className="relative">
+      <div
+        className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
+        onClick={() => setIsAssignDropdownOpen(!isAssignDropdownOpen)}
+      >
+        <span className="text-sm font-medium">
+          {formData.assignedTo || "Select a staff member"}
+        </span>
+        <FaChevronDown
+          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ₹{
+            isAssignDropdownOpen ? "rotate-180" : ""
+          }`}
+        />
+      </div>
+
+      {isAssignDropdownOpen && (
+        <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-md overflow-hidden">
+          {staffMembers
+            .filter((s) => s !== "All Staff")
+            .map((staff) => (
+              <div
+                key={staff}
+                className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
+                onClick={() => {
+                  setFormData({ ...formData, assignedTo: staff });
+                  setIsAssignDropdownOpen(false);
+                }}
+              >
+                {staff}
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  </div>
+</div>
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
@@ -988,7 +1108,7 @@ const Leads = () => {
             { label: "Lead Name", value: selectedLead.name, icon: <FaUser className="text-rose-400" /> },
             { label: "Email", value: selectedLead.email, icon: <FaEnvelope className="text-rose-400" /> },
             { label: "Company", value: selectedLead.company, icon: <FaBuilding className="text-rose-400" /> },
-            { label: "Value", value: `$${selectedLead.value.toLocaleString()}`, icon: <FaDollarSign className="text-rose-400" /> },
+            { label: "Value", value: `₹₹{selectedLead.value.toLocaleString()}`, icon: <FaDollarSign className="text-rose-400" /> },
             { label: "Stage", value: selectedLead.stage, icon: <FaLayerGroup className="text-rose-400" /> },
             { label: "Source", value: selectedLead.source, icon: <FaLink className="text-rose-400" /> },
             { label: "Created At", value: selectedLead.createdAt, icon: <FaCalendarAlt className="text-rose-400" /> },

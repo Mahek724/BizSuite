@@ -119,8 +119,7 @@ const Dashboard = () => {
           </div>
 
           {/* ✅ Scrollable content area (overflow moved here) */}
-          {/* <div className="px-32 py-4 space-y-8 w-full overflow-y-auto"> */}
-          <div className="px-10 lg:px-20 xl:px-24 2xl:px-28 py-6 space-y-8 w-full overflow-y-auto max-w-[1800px] mx-auto">
+<div className="px-6 sm:px-8 md:px-10 lg:px-12 xl:px-14 2xl:px-16 py-6 space-y-8 w-full overflow-y-auto">
 
             
 
@@ -131,37 +130,43 @@ const Dashboard = () => {
           </h2>
 
           {/* Top Stat Cards */}
-          <motion.div
-            // className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-16"
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 xl:gap-14 2xl:gap-16"
+<motion.div
+  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 xl:gap-14 2xl:gap-16"
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+>
+  {cards.map((card, i) => (
+    <motion.div
+      key={i}
+      whileHover={{ scale: 1.05 }}
+      transition={{ type: "spring", stiffness: 280 }}
+      className="bg-white p-6 rounded-2xl shadow-md border border-[#f1e4e1] w-[110%] min-h-[130px]"
+    >
+      {/* Top row: Icon + Title + Value */}
+      <div className="flex items-center gap-3">
+        <div className="bg-[#f8dcd3] text-[#b44d3b] text-2xl p-3 rounded-xl flex items-center justify-center">
+          {card.icon}
+        </div>
+        <div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-gray-700">{card.title}</span>
+            <span className="text-xl font-bold text-gray-900">{card.value}</span>
+          </div>
+        </div>
+      </div>
 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            {cards.map((card, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ scale: 1.03 }}
-                transition={{ type: "spring", stiffness: 280 }}
-                className="bg-white p-3 rounded-2xl shadow-sm border border-[#f1e4e1] w-full" //w-[115%]"
+      {/* Subtext starts under icon */}
+      {/* Subtext aligned perfectly under icon */}
+<div className="flex mt-2">
+  <div className="w-[1.2rem] shrink-0"></div> {/* spacer same width as icon box */}
+  <p className={`text-sm ₹{card.changeColor}`}>
+    {card.change} <span className="text-gray-500">{card.sub}</span>
+  </p>
+</div>
 
-              >
-                <div className="flex items-center gap-4">
-                  <div className="bg-[#f8dcd3] text-[#b44d3b] text-2xl p-2 rounded-xl flex items-center justify-center">
-                    {card.icon}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold">{card.title}</span>
-                    <span className="text-lg font-bold">{card.value}</span>
-                  </div>
-                </div>
-                <p className={`text-sm mt-1 ${card.changeColor}`}>
-                  {card.change}{" "}
-                  <span className="text-gray-500">{card.sub}</span>
-                </p>
-              </motion.div>
-            ))}
-          </motion.div>
+    </motion.div>
+  ))}
+</motion.div>
 
           {/* Charts Row 1 - Pie + Bar */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -208,14 +213,14 @@ const Dashboard = () => {
                             fontSize={12}
                             fontWeight={600}
                           >
-                            {`${name}: ${value} (${(percent * 100).toFixed(1)}%)`}
+                            {`₹{name}: ₹{value} (₹{(percent * 100).toFixed(1)}%)`}
                           </text>
                         );
                       }}
                     >
                       {pieData.map((entry, index) => (
                         <Cell
-                          key={`cell-${index}`}
+                          key={`cell-₹{index}`}
                           fill={pieColors[index % pieColors.length]}
                         />
                       ))}

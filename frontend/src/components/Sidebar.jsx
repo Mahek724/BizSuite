@@ -52,7 +52,7 @@ const Sidebar = () => {
             onClick={() => handleNavigation(item.path)}
             className={`flex items-center gap-3 px-4 py-2 rounded-xl text-base font-medium transition-all duration-200
               outline-none focus:outline-none focus:ring-0
-              ${
+              ₹{
                 location.pathname === item.path
                   ? "bg-white text-rose-600 shadow-md"
                   : "bg-transparent text-white hover:bg-white/25 hover:text-white hover:shadow-inner backdrop-blur-sm outline-none"

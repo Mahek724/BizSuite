@@ -10,6 +10,9 @@ import {
   FaCalendar,
   FaFilter,
   FaTasks,
+  FaUser, 
+  FaFlag, 
+  FaStickyNote,
   FaAlignLeft,
   FaExclamationCircle,
   FaInfoCircle,
@@ -300,7 +303,7 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
   >
     <span>{filters.status}</span>
     <FaChevronDown
-      className={`transition-transform duration-200 ${
+      className={`transition-transform duration-200 ₹{
         isDropdownOpen.status ? "rotate-180" : ""
       } text-[#E50046]`}
     />
@@ -315,7 +318,7 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
             setFilters({ ...filters, status });
             setIsDropdownOpen({ status: false, priority: false, staff: false });
           }}
-          className={`px-4 py-2 text-sm cursor-pointer hover:bg-[#FFF0BD] hover:text-[#E50046] ${
+          className={`px-4 py-2 text-sm cursor-pointer hover:bg-[#FFF0BD] hover:text-[#E50046] ₹{
             filters.status === status ? "bg-[#FFF0BD] text-[#E50046]" : ""
           }`}
           style={{ fontFamily: "'Raleway', sans-serif" }}
@@ -345,7 +348,7 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
   >
     <span>{filters.priority}</span>
     <FaChevronDown
-      className={`transition-transform duration-200 ${
+      className={`transition-transform duration-200 ₹{
         isDropdownOpen.priority ? "rotate-180" : ""
       } text-[#E50046]`}
     />
@@ -360,7 +363,7 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
             setFilters({ ...filters, priority });
             setIsDropdownOpen({ status: false, priority: false, staff: false });
           }}
-          className={`px-4 py-2 text-sm cursor-pointer hover:bg-[#FFF0BD] hover:text-[#E50046] ${
+          className={`px-4 py-2 text-sm cursor-pointer hover:bg-[#FFF0BD] hover:text-[#E50046] ₹{
             filters.priority === priority ? "bg-[#FFF0BD] text-[#E50046]" : ""
           }`}
           style={{ fontFamily: "'Raleway', sans-serif" }}
@@ -391,7 +394,7 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
   >
     <span>{filters.staff}</span>
     <FaChevronDown
-      className={`transition-transform duration-200 ${
+      className={`transition-transform duration-200 ₹{
         isDropdownOpen.staff ? "rotate-180" : ""
       } text-[#E50046]`}
     />
@@ -406,7 +409,7 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
             setFilters({ ...filters, staff });
             setIsDropdownOpen({ status: false, priority: false, staff: false });
           }}
-          className={`px-4 py-2 text-sm cursor-pointer hover:bg-[#FFF0BD] hover:text-[#E50046] ${
+          className={`px-4 py-2 text-sm cursor-pointer hover:bg-[#FFF0BD] hover:text-[#E50046] ₹{
             filters.staff === staff ? "bg-[#FFF0BD] text-[#E50046]" : ""
           }`}
           style={{ fontFamily: "'Raleway', sans-serif" }}
@@ -421,13 +424,13 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
 </motion.div>
 
           {/* Table Section */}
-          <motion.div
+         <motion.div
   key="list"
-  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-rose-100 overflow-x-auto mt-4"
+  className="bg-white/80 rounded-2xl shadow-md border border-rose-100 overflow-x-auto mt-4"
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
   exit={{ opacity: 0, y: -20 }}
-  transition={{ duration: 0.5, ease: 'easeOut' }}
+  transition={{ duration: 0.5, ease: "easeOut" }}
 >
   {filteredTasks.length > 0 ? (
     <motion.table
@@ -449,125 +452,125 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
           <th className="py-3 px-4 text-center">Actions</th>
         </tr>
       </thead>
+
       <tbody>
         {filteredTasks.map((task) => (
           <motion.tr
-  key={task.id}
-  className={`border-b border-gray-100 transition-all duration-300 ${
-    task.completed
-      ? "opacity-60 blur-[1px] hover:opacity-80 hover:blur-0"
-      : "hover:bg-rose-50"
-  }`}
-  variants={{
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0 },
-  }}
->
-  {/* Title + Checkbox */}
-  <td className="py-3 px-4 flex items-center gap-3">
-    <button
-      onClick={() => handleToggleComplete(task.id)}
-      className="flex items-center justify-center w-5 h-5 border-2 border-rose-400 rounded-full focus:outline-none"
-    >
-      {task.completed ? (
-        <FaCheckCircle className="text-rose-500 w-4 h-4" />
-      ) : (
-        <FaCircle className="text-rose-300 w-3.5 h-3.5" />
-      )}
-    </button>
-    <div>
-      <h4
-        className={`font-semibold text-gray-800 ${
-          task.completed ? "line-through text-gray-500" : ""
-        }`}
-      >
-        {task.title}
-      </h4>
-      <p
-        className={`text-xs text-gray-500 mt-0.5 ${
-          task.completed ? "line-through text-gray-400" : ""
-        }`}
-      >
-        {task.description}
-      </p>
-    </div>
-  </td>
+            key={task.id}
+            className={`border-b border-gray-100 transition-all duration-300 ${
+              task.completed
+                ? "opacity-60 blur-[1px] hover:opacity-100 hover:blur-0"
+                : "hover:bg-rose-50"
+            }`}
+            variants={{
+              hidden: { opacity: 0, y: 10 },
+              show: { opacity: 1, y: 0 },
+            }}
+          >
+            {/* ✅ Title + Checkbox */}
+            <td className="py-3 px-4 flex items-center gap-3">
+              <button
+                onClick={() => handleToggleComplete(task.id)}
+                className="flex items-center justify-center w-5 h-5 border-2 border-rose-400 rounded-full focus:outline-none"
+              >
+                {task.completed ? (
+                  <FaCheckCircle className="text-rose-500 w-4 h-4" />
+                ) : (
+                  <FaCircle className="text-rose-300 w-3.5 h-3.5" />
+                )}
+              </button>
+              <div>
+                <h4
+                  className={`font-semibold text-gray-800 ${
+                    task.completed ? "line-through text-gray-500" : ""
+                  }`}
+                >
+                  {task.title}
+                </h4>
+                <p
+                  className={`text-xs text-gray-500 mt-0.5 ${
+                    task.completed ? "line-through text-gray-400" : ""
+                  }`}
+                >
+                  {task.description}
+                </p>
+              </div>
+            </td>
 
-  {/* Due Date */}
-  <td className="py-3 px-4 text-gray-800 whitespace-nowrap">
-    <div className="flex items-center gap-2 text-sm">
-      <FaCalendar className="text-rose-400 w-3.5 h-3.5" />
-      {task.dueDate}
-    </div>
-  </td>
+            {/* Due Date */}
+            <td className="py-3 px-4 text-gray-800 whitespace-nowrap">
+              <div className="flex items-center gap-2 text-sm">
+                <FaCalendar className="text-rose-400 w-3.5 h-3.5" />
+                {task.dueDate}
+              </div>
+            </td>
 
-  {/* Priority */}
-  <td className="py-3 px-4 whitespace-nowrap">
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-        task.priority === "High"
-          ? "bg-red-100 text-red-600"
-          : task.priority === "Medium"
-          ? "bg-yellow-100 text-yellow-600"
-          : "bg-green-100 text-green-600"
-      }`}
-    >
-      {task.priority}
-    </span>
-  </td>
+            {/* Priority */}
+            <td className="py-3 px-4 whitespace-nowrap">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  task.priority === "High"
+                    ? "bg-red-100 text-red-600"
+                    : task.priority === "Medium"
+                    ? "bg-yellow-100 text-yellow-600"
+                    : "bg-green-100 text-green-600"
+                }`}
+              >
+                {task.priority}
+              </span>
+            </td>
 
-  {/* Status Label */}
-  <td className="py-3 px-4 whitespace-nowrap">
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-        task.status === "pending"
-          ? "bg-gray-100 text-gray-600"
-          : task.status === "in-progress"
-          ? "bg-blue-100 text-blue-600"
-          : "bg-green-100 text-green-600"
-      }`}
-    >
-      {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-    </span>
-  </td>
+            {/* Status Label */}
+            <td className="py-3 px-4 whitespace-nowrap">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  task.status === "pending"
+                    ? "bg-gray-100 text-gray-600"
+                    : task.status === "in-progress"
+                    ? "bg-blue-100 text-blue-600"
+                    : "bg-green-100 text-green-600"
+                }`}
+              >
+                {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+              </span>
+            </td>
 
-  {/* Assigned To */}
-  <td className="py-3 px-4 whitespace-nowrap">
-    <div className="flex items-center gap-2">
-      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-        {task.assignedTo.charAt(0)}
-      </div>
-      <span className="font-medium text-gray-800 text-sm truncate max-w-[160px]">
-        {task.assignedTo}
-      </span>
-    </div>
-  </td>
+            {/* Assigned To */}
+            <td className="py-3 px-4 whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                  {task.assignedTo.charAt(0)}
+                </div>
+                <span className="font-medium text-gray-800 text-sm truncate max-w-[160px]">
+                  {task.assignedTo}
+                </span>
+              </div>
+            </td>
 
-  {/* Actions */}
-  <td className="py-3 px-4 text-center">
-    <div className="flex justify-center gap-2">
-      <button
-        className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
-        onClick={() => handleViewDetails(task)}
-      >
-        <FaEye />
-      </button>
-      <button
-        className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
-        onClick={() => handleEditTask(task)}
-      >
-        <FaEdit />
-      </button>
-      <button
-        className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-        onClick={() => handleDeleteConfirm(task)}
-      >
-        <FaTrash />
-      </button>
-    </div>
-  </td>
-</motion.tr>
-
+            {/* Actions */}
+            <td className="py-3 px-4 text-center">
+              <div className="flex justify-center gap-2">
+                <button
+                  className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
+                  onClick={() => handleViewDetails(task)}
+                >
+                  <FaEye />
+                </button>
+                <button
+                  className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
+                  onClick={() => handleEditTask(task)}
+                >
+                  <FaEdit />
+                </button>
+                <button
+                  className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                  onClick={() => handleDeleteConfirm(task)}
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            </td>
+          </motion.tr>
         ))}
       </tbody>
     </motion.table>
@@ -611,7 +614,7 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
           {/* Title */}
           <div>
             <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-              Title
+              <FaTasks className="text-rose-400" /> Title
             </label>
             <input
               type="text"
@@ -627,7 +630,7 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
           {/* Description */}
           <div>
             <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-              Description
+              <FaStickyNote className="text-rose-400" /> Description
             </label>
             <textarea
               value={selectedTask?.description || ""}
@@ -642,9 +645,10 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
 
           {/* Due Date & Priority */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Due Date */}
             <div>
               <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-                Due Date
+                <FaCalendar className="text-rose-400" /> Due Date
               </label>
               <input
                 type="text"
@@ -657,91 +661,93 @@ const [isDropdownOpen, setIsDropdownOpen] = useState({
               />
             </div>
 
+            {/* Priority Dropdown */}
             <div className="relative">
-  <button
-    type="button"
-    onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
-  >
-    {selectedTask?.priority || "Select Priority"}
-    <FaChevronDown
-      className={`transition-transform duration-300 ${
-        showPriorityDropdown ? "rotate-180" : ""
-      } text-gray-400`}
-    />
-  </button>
+              <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                <FaFlag className="text-rose-400" /> Priority
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
+              >
+                {selectedTask?.priority || "Select Priority"}
+                <FaChevronDown
+                  className={`transition-transform duration-300 ₹{
+                    showPriorityDropdown ? "rotate-180" : ""
+                  } text-gray-400`}
+                />
+              </button>
 
-  <AnimatePresence>
-    {showPriorityDropdown && (
-      <motion.ul
-        className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-      >
-        {["High", "Medium", "Low"].map((priority) => (
-          <li
-            key={priority}
-            onClick={() => {
-              setSelectedTask({ ...selectedTask, priority });
-              setShowPriorityDropdown(false);
-            }}
-            className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all"
-          >
-            {priority}
-          </li>
-        ))}
-      </motion.ul>
-    )}
-  </AnimatePresence>
-</div>
-
+              <AnimatePresence>
+                {showPriorityDropdown && (
+                  <motion.ul
+                    className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    {["High", "Medium", "Low"].map((priority) => (
+                      <li
+                        key={priority}
+                        onClick={() => {
+                          setSelectedTask({ ...selectedTask, priority });
+                          setShowPriorityDropdown(false);
+                        }}
+                        className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all"
+                      >
+                        {priority}
+                      </li>
+                    ))}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Assigned To */}
           <div>
             <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-              Assigned To
+              <FaUser className="text-rose-400" /> Assigned To
             </label>
             <div className="relative">
-  <button
-    type="button"
-    onClick={() => setShowAssignedDropdown(!showAssignedDropdown)}
-    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
-  >
-    {selectedTask?.assignedTo || "Select Person"}
-    <FaChevronDown
-      className={`transition-transform duration-300 ${
-        showAssignedDropdown ? "rotate-180" : ""
-      } text-gray-400`}
-    />
-  </button>
+              <button
+                type="button"
+                onClick={() => setShowAssignedDropdown(!showAssignedDropdown)}
+                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
+              >
+                {selectedTask?.assignedTo || "Select Person"}
+                <FaChevronDown
+                  className={`transition-transform duration-300 ₹{
+                    showAssignedDropdown ? "rotate-180" : ""
+                  } text-gray-400`}
+                />
+              </button>
 
-  <AnimatePresence>
-    {showAssignedDropdown && (
-      <motion.ul
-        className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-      >
-        {["John Doe", "Jane Smith"].map((person) => (
-          <li
-            key={person}
-            onClick={() => {
-              setSelectedTask({ ...selectedTask, assignedTo: person });
-              setShowAssignedDropdown(false);
-            }}
-            className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all"
-          >
-            {person}
-          </li>
-        ))}
-      </motion.ul>
-    )}
-  </AnimatePresence>
-</div>
-
+              <AnimatePresence>
+                {showAssignedDropdown && (
+                  <motion.ul
+                    className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    {["John Doe", "Jane Smith"].map((person) => (
+                      <li
+                        key={person}
+                        onClick={() => {
+                          setSelectedTask({ ...selectedTask, assignedTo: person });
+                          setShowAssignedDropdown(false);
+                        }}
+                        className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all"
+                      >
+                        {person}
+                      </li>
+                    ))}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Error */}

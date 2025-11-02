@@ -55,15 +55,17 @@ const Clients = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTag, setFilterTag] = useState("All Tags");
   const [viewMode, setViewMode] = useState("kanban");
+  const [isAssignDropdownOpen, setIsAssignDropdownOpen] = useState(false);
+
 
 
   const validateForm = () => {
     if (!selectedClient.name.trim()) return "Name is required";
     if (!selectedClient.email.trim()) return "Email is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(selectedClient.email))
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+₹/.test(selectedClient.email))
       return "Enter a valid email";
     if (!selectedClient.phone.trim()) return "Phone number is required";
-    if (!/^[0-9+\-()\s]+$/.test(selectedClient.phone))
+    if (!/^[0-9+\-()\s]+₹/.test(selectedClient.phone))
       return "Enter a valid phone number";
     if (!selectedClient.company.trim()) return "Company is required";
     return "";
@@ -274,7 +276,7 @@ const Clients = () => {
 <div className="flex justify-end items-center mb-4 gap-3">
   <button
     onClick={() => setViewMode("kanban")}
-    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ${
+    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ₹{
       viewMode === "kanban"
         ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white"
         : "bg-white border border-gray-200 text-gray-700 hover:bg-rose-50"
@@ -285,7 +287,7 @@ const Clients = () => {
 
   <button
     onClick={() => setViewMode("list")}
-    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ${
+    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ₹{
       viewMode === "list"
         ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white"
         : "bg-white border border-gray-200 text-gray-700 hover:bg-rose-50"
@@ -565,7 +567,7 @@ const Clients = () => {
                   onChange={(e) =>
                     setSelectedClient({ ...selectedClient, [field]: e.target.value })
                   }
-                  placeholder={`Enter ${field}`}
+                  placeholder={`Enter ₹{field}`}
                 />
               </div>
             ))}
@@ -624,24 +626,48 @@ const Clients = () => {
           </div>
 
           {/* Assigned To */}
-          <div>
-            <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-              <FaUser className="text-rose-400" /> Assigned To
-            </label>
-            <div className="relative">
-              <select
-                className="w-full appearance-none border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer"
-                value={selectedClient?.assignedTo || "John Doe"}
-                onChange={(e) =>
-                  setSelectedClient({ ...selectedClient, assignedTo: e.target.value })
-                }
-              >
-                <option>John Doe</option>
-                <option>Jane Smith</option>
-              </select>
-              <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
+          {/* Assigned To — same dropdown color/design as All Tags filter */}
+<div>
+  <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+    <FaUser className="text-rose-400" /> Assigned To
+  </label>
+
+  <div className="relative">
+    {/* Dropdown Header */}
+    <div
+      className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
+      onClick={() => setIsAssignDropdownOpen(!isAssignDropdownOpen)}
+    >
+      <span className="text-sm font-medium">
+        {selectedClient?.assignedTo || "Select a user"}
+      </span>
+      <FaChevronDown
+        className={`ml-2 text-[#E50046] transform transition-transform duration-300 ₹{
+          isAssignDropdownOpen ? "rotate-180" : ""
+        }`}
+      />
+    </div>
+
+    {/* Dropdown Menu */}
+    {isAssignDropdownOpen && (
+      <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-md overflow-hidden">
+        {["John Doe", "Jane Smith", "Robert Brown", "Emily Davis"].map((user) => (
+          <div
+            key={user}
+            className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
+            onClick={() => {
+              setSelectedClient({ ...selectedClient, assignedTo: user });
+              setIsAssignDropdownOpen(false);
+            }}
+          >
+            {user}
           </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
 
           {error && (
             <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">

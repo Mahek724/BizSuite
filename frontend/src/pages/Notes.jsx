@@ -614,7 +614,7 @@ const Notes = () => {
   >
     {selectedNote?.category || "Select Category"}
     <FaChevronDown
-      className={`transition-transform duration-300 ${
+      className={`transition-transform duration-300 ₹{
         showCategoryDropdown ? "rotate-180" : ""
       } text-gray-400`}
     />
@@ -661,7 +661,7 @@ const Notes = () => {
                     onClick={() =>
                       setSelectedNote({ ...selectedNote, color: color.value })
                     }
-                    className={`w-10 h-10 rounded-full border-2 transition-all ${
+                    className={`w-10 h-10 rounded-full border-2 transition-all ₹{
                       selectedNote?.color === color.value
                         ? "border-rose-500 scale-110"
                         : "border-gray-300"

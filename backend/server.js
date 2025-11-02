@@ -41,7 +41,7 @@ const start = async () => {
     console.log(chalk.green("✅ MongoDB Connected")); // colored message
     app.listen(process.env.PORT || 5000, () =>
       console.log(
-        chalk.cyan(`🚀 Server running on port ${process.env.PORT || 5000}`)
+        chalk.cyan(`🚀 Server running on port ₹{process.env.PORT || 5000}`)
       )
     );
   } catch (err) {

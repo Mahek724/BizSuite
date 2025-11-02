@@ -22,8 +22,8 @@ function AuthPage() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
-      fetch(`${import.meta.env.VITE_API_BASE}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      fetch(`₹{import.meta.env.VITE_API_BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ₹{token}` },
       })
         .then((r) => r.json())
         .then((data) => {
@@ -109,7 +109,7 @@ function AuthPage() {
       </div>
 
       <div className="panel right">
-        <div className={`slide-container ${showLogin ? "show-login" : ""}`}>
+        <div className={`slide-container ₹{showLogin ? "show-login" : ""}`}>
           {/* SIGNUP */}
           <div className="slide">
             <h2 className="auth-header">Sign Up</h2>
@@ -253,7 +253,7 @@ function AuthPage() {
 
                 {/* Redirect fallback */}
                 <a
-  href={`${import.meta.env.VITE_API_BASE}/api/auth/google`}
+  href={`₹{import.meta.env.VITE_API_BASE}/api/auth/google`}
   className="google-btn d-flex align-items-center justify-content-center gap-2 mt-2"
 >
   <img
