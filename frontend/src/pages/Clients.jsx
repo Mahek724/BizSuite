@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext"; 
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,30 +23,14 @@ import {
   FaChevronDown,
 } from "react-icons/fa";
 
-const Clients = () => {
-  const [clients, setClients] = useState([
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarahj@techcorp.com",
-      phone: "+1 (555) 123-4567",
-      company: "TechCorp Solutions",
-      tags: ["Enterprise", "High Priority", "Software"],
-      assignedTo: "John Doe",
-      createdAt: "9/15/2025, 3:30:00 PM",
-    },
-    {
-      id: 2,
-      name: "Michael Chen",
-      email: "mchen@innovate.io",
-      phone: "+1 (555) 234-5678",
-      company: "Innovate Labs",
-      tags: ["Startup", "Tech"],
-      assignedTo: "Jane Smith",
-      createdAt: "9/15/2025, 3:31:00 PM",
-    },
-  ]);
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE + "/api",
+});
 
+const Clients = () => {
+   const { user } = useAuth();
+  const [clients, setClients] = useState([]);
+  const [staffList, setStaffList] = useState([]); 
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -62,14 +48,34 @@ const Clients = () => {
   const validateForm = () => {
     if (!selectedClient.name.trim()) return "Name is required";
     if (!selectedClient.email.trim()) return "Email is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+₹/.test(selectedClient.email))
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(selectedClient.email))
       return "Enter a valid email";
     if (!selectedClient.phone.trim()) return "Phone number is required";
-    if (!/^[0-9+\-()\s]+₹/.test(selectedClient.phone))
+    if (!/^[0-9+\-()\s]+$/.test(selectedClient.phone))
       return "Enter a valid phone number";
     if (!selectedClient.company.trim()) return "Company is required";
     return "";
   };
+
+useEffect(() => {
+    if (isAddFormOpen || isEditFormOpen) {
+      api.get("/auth/staff", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+      })
+        .then(res => setStaffList(res.data.staff))
+        .catch(() => setStaffList([]));
+    }
+  }, [isAddFormOpen, isEditFormOpen]);
+
+  // When fetching clients, also populate assignedTo with staff info
+  useEffect(() => {
+    api.get("/clients", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+    })
+      .then(res => setClients(res.data.clients))
+      .catch(() => setClients([]));
+  }, []);
+
 
   const handleAddClient = () => {
     setIsAddFormOpen(true);
@@ -78,62 +84,88 @@ const Clients = () => {
       email: "",
       phone: "",
       company: "",
-      assignedTo: "John Doe",
+      assignedTo: "",
       tags: [],
     });
     setError("");
   };
 
-  const handleSaveClient = (e) => {
-    e.preventDefault();
-    const validation = validateForm();
-    if (validation) {
-      setError(validation);
-      return;
-    }
-
-    if (selectedClient.id) {
-      setClients(
-        clients.map((c) => (c.id === selectedClient.id ? selectedClient : c))
-      );
+  const handleSaveClient = async (e) => {
+  e.preventDefault();
+  const validation = validateForm();
+  if (validation) {
+    setError(validation);
+    return;
+  }
+  try {
+    if (selectedClient._id) { // Edit mode
+      await api.put(`/clients/${selectedClient._id}`, selectedClient, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+      });
       setIsEditFormOpen(false);
-    } else {
-      setClients([
-        ...clients,
-        {
-          ...selectedClient,
-          id: Date.now(),
-          createdAt: new Date().toLocaleString("en-US", {
-            dateStyle: "short",
-            timeStyle: "short",
-          }),
-        },
-      ]);
+    } else { // Add mode
+      await api.post("/clients", selectedClient, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+      });
       setIsAddFormOpen(false);
     }
-    setError("");
+    // Reload clients after save
+    const res = await api.get("/clients", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+    });
+    setClients(res.data.clients);
     setSelectedClient(null);
-  };
+    setError("");
+  } catch (err) {
+    setError("Failed to save client.");
+  }
+};
+
 
   const handleEditClient = (client) => {
-    setSelectedClient(client);
-    setIsEditFormOpen(true);
-    setError("");
-  };
+  setSelectedClient({
+    ...client,
+    assignedTo: typeof client.assignedTo === "object" 
+      ? client.assignedTo._id 
+      : client.assignedTo,
+  });
+  setIsEditFormOpen(true);
+  setError("");
+};
+
 
   const handleViewDetails = (client) => {
-    setSelectedClient(client);
-    setIsDetailsOpen(true);
-  };
+  const assignedUser =
+    typeof client.assignedTo === "object"
+      ? client.assignedTo
+      : staffList.find((s) => s._id === client.assignedTo);
+
+  setSelectedClient({
+    ...client,
+    assignedTo: assignedUser || { fullName: "Unassigned" },
+  });
+  setIsDetailsOpen(true);
+};
+
 
   const handleDeleteConfirm = (client) => {
     setDeleteConfirm(client);
   };
 
-  const handleDelete = () => {
-    setClients(clients.filter((c) => c.id !== deleteConfirm.id));
+  const handleDelete = async () => {
+  try {
+    await api.delete(`/clients/${deleteConfirm._id}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+    });
+    const res = await api.get("/clients", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+    });
+    setClients(res.data.clients);
     setDeleteConfirm(null);
-  };
+  } catch (err) {
+    setError("Failed to delete client.");
+  }
+};
 
   const closeModal = () => {
     setIsAddFormOpen(false);
@@ -156,16 +188,11 @@ const Clients = () => {
   });
 
   const allTags = [
-    "All Tags",
-    "Enterprise",
-    "High Priority",
-    "Startup",
-    "Tech",
-    "Sustainability",
-    "Medium Priority",
-    "Software",
-    "Retail"
-  ];
+  "All Tags",
+  ...Array.from(
+    new Set(clients.flatMap(c => c.tags || []))
+  ),
+];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -196,13 +223,16 @@ const Clients = () => {
 
 </div>
 
-   <button
-  className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-  onClick={handleAddClient}
->
-  <FaPlus className="w-4 h-4" />
-  Add Client
-</button>
+   {user?.role !== "staff" && (
+  <button
+    className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+    onClick={handleAddClient}
+  >
+    <FaPlus className="w-4 h-4" />
+    Add Client
+  </button>
+)}
+
 
   </motion.div>
 
@@ -276,7 +306,7 @@ const Clients = () => {
 <div className="flex justify-end items-center mb-4 gap-3">
   <button
     onClick={() => setViewMode("kanban")}
-    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ₹{
+    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ${
       viewMode === "kanban"
         ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white"
         : "bg-white border border-gray-200 text-gray-700 hover:bg-rose-50"
@@ -287,7 +317,7 @@ const Clients = () => {
 
   <button
     onClick={() => setViewMode("list")}
-    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ₹{
+    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ${
       viewMode === "list"
         ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white"
         : "bg-white border border-gray-200 text-gray-700 hover:bg-rose-50"
@@ -346,7 +376,12 @@ const Clients = () => {
                 <FaPhoneAlt className="text-rose-400 w-3" /> {client.phone}
               </div>
               <div className="flex items-center gap-2">
-                <FaUserTie className="text-rose-400 w-3" /> {client.assignedTo}
+                <FaUserTie className="text-rose-400 w-3" /> 
+                {typeof client.assignedTo === "object"
+  ? client.assignedTo?.fullName
+  : staffList.find((s) => s._id === client.assignedTo)?.fullName || "Unassigned"}
+
+
               </div>
             </div>
 
@@ -363,26 +398,37 @@ const Clients = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-between border-t border-gray-100 pt-3">
-              <button
-                onClick={() => handleViewDetails(client)}
-                className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
-              >
-                <FaEye />
-              </button>
-              <button
-                onClick={() => handleEditClient(client)}
-                className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
-              >
-                <FaEdit />
-              </button>
-              <button
-                onClick={() => handleDeleteConfirm(client)}
-                className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-              >
-                <FaTrash />
-              </button>
-            </div>
+            <div
+  className={`flex border-t border-gray-100 pt-3 ${
+    user?.role === "staff" ? "justify-center" : "justify-between"
+  }`}
+>
+  <button
+    onClick={() => handleViewDetails(client)}
+    className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
+  >
+    <FaEye />
+  </button>
+
+  {user?.role !== "staff" && (
+    <>
+      <button
+        onClick={() => handleEditClient(client)}
+        className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
+      >
+        <FaEdit />
+      </button>
+      <button
+        onClick={() => handleDeleteConfirm(client)}
+        className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+      >
+        <FaTrash />
+      </button>
+    </>
+  )}
+</div>
+
+
           </motion.div>
         ))
       ) : (
@@ -455,7 +501,11 @@ const Clients = () => {
                 <td className="py-3 px-4 whitespace-nowrap">
   <div className="flex items-center gap-2">
     <span className="font-medium text-gray-800 text-sm truncate max-w-[160px]">
-      {client.assignedTo || "Unassigned"}
+    {typeof client.assignedTo === "object"
+  ? client.assignedTo?.fullName
+  : staffList.find((s) => s._id === client.assignedTo)?.fullName || "Unassigned"}
+
+
     </span>
   </div>
 </td>
@@ -474,27 +524,33 @@ const Clients = () => {
                   </div>
                 </td>
                 <td className="py-3 px-4 text-center">
-                  <div className="flex justify-center gap-2">
-                    <button
-                      className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
-                      onClick={() => handleViewDetails(client)}
-                    >
-                      <FaEye />
-                    </button>
-                    <button
-                      className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
-                      onClick={() => handleEditClient(client)}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-                      onClick={() => handleDeleteConfirm(client)}
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </td>
+  <div className="flex justify-center gap-2">
+    <button
+      className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
+      onClick={() => handleViewDetails(client)}
+    >
+      <FaEye />
+    </button>
+
+    {user?.role !== "staff" && (
+      <>
+        <button
+          className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
+          onClick={() => handleEditClient(client)}
+        >
+          <FaEdit />
+        </button>
+        <button
+          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+          onClick={() => handleDeleteConfirm(client)}
+        >
+          <FaTrash />
+        </button>
+      </>
+    )}
+  </div>
+</td>
+
               </motion.tr>
             ))}
           </tbody>
@@ -567,7 +623,7 @@ const Clients = () => {
                   onChange={(e) =>
                     setSelectedClient({ ...selectedClient, [field]: e.target.value })
                   }
-                  placeholder={`Enter ₹{field}`}
+                  placeholder={`Enter ${field}`}
                 />
               </div>
             ))}
@@ -638,11 +694,19 @@ const Clients = () => {
       className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
       onClick={() => setIsAssignDropdownOpen(!isAssignDropdownOpen)}
     >
-      <span className="text-sm font-medium">
-        {selectedClient?.assignedTo || "Select a user"}
-      </span>
+     <span className="text-sm font-medium">
+  {
+    (() => {
+      const assignedStaff = staffList.find(u => u._id === selectedClient?.assignedTo);
+      if (assignedStaff) return assignedStaff.fullName;
+      const populatedName = selectedClient?.assignedTo?.fullName;
+      return populatedName || "Select a user";
+    })()
+  }
+</span>
+
       <FaChevronDown
-        className={`ml-2 text-[#E50046] transform transition-transform duration-300 ₹{
+        className={`ml-2 text-[#E50046] transform transition-transform duration-300 ${
           isAssignDropdownOpen ? "rotate-180" : ""
         }`}
       />
@@ -650,21 +714,25 @@ const Clients = () => {
 
     {/* Dropdown Menu */}
     {isAssignDropdownOpen && (
-      <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-md overflow-hidden">
-        {["John Doe", "Jane Smith", "Robert Brown", "Emily Davis"].map((user) => (
+    <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-md overflow-hidden">
+      {staffList.length === 0 ? (
+        <div className="px-4 py-2 text-gray-400">No staff registered</div>
+      ) : (
+        staffList.map(staff => (
           <div
-            key={user}
+            key={staff._id}
             className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
             onClick={() => {
-              setSelectedClient({ ...selectedClient, assignedTo: user });
+              setSelectedClient({ ...selectedClient, assignedTo: staff._id});
               setIsAssignDropdownOpen(false);
             }}
           >
-            {user}
+            {staff.fullName}
           </div>
-        ))}
-      </div>
-    )}
+        ))
+      )}
+    </div>
+  )}
   </div>
 </div>
 
@@ -782,8 +850,14 @@ const Clients = () => {
               <FaUserTie className="text-rose-400" /> Assigned To
             </label>
             <div className="text-base text-gray-800 border-2 border-gray-200 px-4 py-2.5 rounded-lg bg-gray-50 focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-100 transition-all">
-              {selectedClient.assignedTo}
-            </div>
+  {selectedClient?.assignedTo
+    ? typeof selectedClient.assignedTo === "object"
+      ? selectedClient.assignedTo.fullName
+      : staffList.find((s) => s._id === selectedClient.assignedTo)?.fullName || "Unassigned"
+    : "Unassigned"
+  }
+</div>
+
           </div>
         </div>
 

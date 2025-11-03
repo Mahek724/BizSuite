@@ -73,7 +73,7 @@ const Activity = () => {
     {
       id: 3,
       type: "Deal",
-      title: "Deal Won - ₹45,000",
+      title: "Deal Won - $45,000",
       description: "Successfully closed deal with Taylor Consulting for Q4 services package",
       user: {
         name: "Jane Smith",

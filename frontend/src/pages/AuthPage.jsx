@@ -18,18 +18,23 @@ function AuthPage() {
   
 
   // --- GOOGLE LOGIN (Redirect Flow) ---
-  useEffect(() => {
+   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
-      fetch(`₹{import.meta.env.VITE_API_BASE}/api/auth/me`, {
-        headers: { Authorization: `Bearer ₹{token}` },
+      fetch(`${import.meta.env.VITE_API_BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
         .then((data) => {
           if (data.user) {
             login(data.user, token, true);
-            navigate("/");
+            // Redirect according to role
+            if (data.user.role === "Admin") {
+              navigate("/dashboard");
+            } else {
+              navigate("/clients");
+            }
           }
         })
         .catch(() => navigate("/login"));
@@ -73,7 +78,12 @@ function AuthPage() {
     try {
       const r = await api.post("/auth/login", li);
       login(r.data.user, r.data.token, li.remember);
-      navigate("/");
+      // Redirect according to role
+      if (r.data.user.role === "Admin") {
+        navigate("/dashboard");
+      } else {
+        navigate("/clients");
+      }
     } catch (err) {
       alert(err?.response?.data?.message || "Login failed");
     } finally {
@@ -109,7 +119,7 @@ function AuthPage() {
       </div>
 
       <div className="panel right">
-        <div className={`slide-container ₹{showLogin ? "show-login" : ""}`}>
+        <div className={`slide-container ${showLogin ? "show-login" : ""}`}>
           {/* SIGNUP */}
           <div className="slide">
             <h2 className="auth-header">Sign Up</h2>
@@ -253,7 +263,7 @@ function AuthPage() {
 
                 {/* Redirect fallback */}
                 <a
-  href={`₹{import.meta.env.VITE_API_BASE}/api/auth/google`}
+  href={`${import.meta.env.VITE_API_BASE}/api/auth/google`}
   className="google-btn d-flex align-items-center justify-content-center gap-2 mt-2"
 >
   <img

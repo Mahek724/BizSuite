@@ -7,12 +7,15 @@ const api = axios.create({
 
 // attach token automatically if present
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("bizsuite_token");
+  const token =
+    localStorage.getItem("bizsuite_token") ||
+    sessionStorage.getItem("bizsuite_token");
   if (token) {
-    config.headers.Authorization = `Bearer ₹{token}`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
 
 const AuthCtx = createContext(null);
 
@@ -21,46 +24,6 @@ function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("bizsuite_token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    api
-      .get("/auth/me")
-      .then((r) => setUser(r.data.user))
-      .catch(() => {
-        // invalid token → remove
-        localStorage.removeItem("bizsuite_token");
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
- const login = (userData, token, remember) => {
-  if (remember) {
-    localStorage.setItem("bizsuite_token", token);
-  } else {
-    sessionStorage.setItem("bizsuite_token", token);
-  }
-  setUser(userData);
-};
-
-const logout = () => {
-  localStorage.removeItem("bizsuite_token");
-  sessionStorage.removeItem("bizsuite_token");
-  setUser(null);
-
-  // Reset Google auto-login
-  if (window.google && window.google.accounts?.id) {
-    window.google.accounts.id.disableAutoSelect();
-  }
-};
-
-
-
-useEffect(() => {
   const token =
     localStorage.getItem("bizsuite_token") ||
     sessionStorage.getItem("bizsuite_token");
@@ -71,7 +34,12 @@ useEffect(() => {
 
   api
     .get("/auth/me")
-    .then((r) => setUser(r.data.user))
+    .then((r) =>
+      setUser({
+        ...r.data.user,
+        role: r.data.user.role?.toLowerCase(),
+      })
+    )
     .catch(() => {
       localStorage.removeItem("bizsuite_token");
       sessionStorage.removeItem("bizsuite_token");
@@ -79,6 +47,37 @@ useEffect(() => {
     })
     .finally(() => setLoading(false));
 }, []);
+
+
+ const login = (userData, token, remember) => {
+  const normalizedUser = {
+    ...userData,
+    role: userData.role?.toLowerCase(),
+  };
+
+  if (remember) {
+    localStorage.setItem("bizsuite_token", token);
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
+  } else {
+    sessionStorage.setItem("bizsuite_token", token);
+    sessionStorage.setItem("user", JSON.stringify(normalizedUser));
+  }
+  setUser(normalizedUser);
+};
+
+
+
+const logout = () => {
+  localStorage.removeItem("bizsuite_token");
+  localStorage.removeItem("user");
+  sessionStorage.removeItem("bizsuite_token");
+  sessionStorage.removeItem("user");
+  setUser(null);
+
+  if (window.google && window.google.accounts?.id) {
+    window.google.accounts.id.disableAutoSelect();
+  }
+};
 
 
   return (

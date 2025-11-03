@@ -5,6 +5,7 @@ import Joi from "joi";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import User from "../models/User.js";
+import { authenticate } from "../middleware/auth.js"; // <-- add this line if you have an auth middleware
 
 const router = express.Router();
 
@@ -60,7 +61,7 @@ router.post("/signup", async (req, res) => {
         fullName,
         email,
         role: user.role,
-        companyName,
+        companyName: user.companyName,
       },
       token,
     });
@@ -130,7 +131,7 @@ router.get("/google/callback",
       role: req.user.role,
       name: req.user.fullName,
     });
-    res.redirect(`₹{process.env.FRONTEND_URL}/auth/success?token=₹{token}`);
+    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
   }
 );
 
@@ -149,7 +150,7 @@ router.post("/forgot-password", async (req, res) => {
     user.resetToken = resetToken;
     await user.save();
 
-    const resetUrl = `₹{process.env.FRONTEND_URL}/reset-password/₹{resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
     console.log("Sending password reset email to:", email, "URL:", resetUrl);
 
     const transporter = nodemailer.createTransport({
@@ -164,7 +165,7 @@ router.post("/forgot-password", async (req, res) => {
       await transporter.sendMail({
         to: email,
         subject: "Password Reset",
-        text: `Click here to reset your password: ₹{resetUrl}`,
+        text: `Click here to reset your password: ${resetUrl}`,
       });
     } catch (mailErr) {
       console.error("Nodemailer error:", mailErr);
@@ -177,8 +178,6 @@ router.post("/forgot-password", async (req, res) => {
     res.status(500).json({ message: "Server error while sending email" });
   }
 });
-
-
 
 // reset password
 router.post("/reset-password/:token", async (req, res) => {
@@ -197,6 +196,23 @@ router.post("/reset-password/:token", async (req, res) => {
     res.json({ message: "Password updated successfully" });
   } catch (err) {
     res.status(400).json({ message: "Invalid or expired token" });
+  }
+});
+
+/**
+ * NEW ROUTE: Get all staff users for "Assigned To" dropdown
+ * Returns array: [{ _id, fullName, email }]
+ * Secured with authenticate middleware (add it as needed)
+ */
+router.get("/staff", authenticate, async (req, res) => {
+  try {
+    console.log("/api/auth/staff called by user:", req.user ? { id: req.user._id, role: req.user.role, fullName: req.user.fullName } : null);
+    const staffUsers = await User.find({ role: { $regex: /^staff$/i } }, "fullName _id email").lean();
+    // return a consistent shape: { staff: [{ _id, fullName, email }] }
+    res.json({ staff: staffUsers });
+  } catch (err) {
+    console.error("Failed to get staff users:", err);
+    res.status(500).json({ message: "Failed to get staff users" });
   }
 });
 

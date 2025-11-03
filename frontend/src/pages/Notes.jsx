@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
+import { useAuth } from "../context/AuthContext"; 
+import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaPlus,
@@ -17,69 +19,15 @@ import {
   FaStickyNote,
 } from "react-icons/fa";
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE + "/api",
+});
+
 const Notes = () => {
-  const [notes, setNotes] = useState([
-    {
-      id: 1,
-      title: "Meeting Notes - TechCorp",
-      content:
-        "Discussed Q4 roadmap, budget allocation for new features, and timeline for product launch. Action items: Follow up with design team, prepare mockups by Friday.",
-      category: "Meeting",
-      color: "#FFE5E5",
-      createdAt: "Oct 6, 2025, 3:30 PM",
-      isPinned: false,
-    },
-    {
-      id: 2,
-      title: "Client Feedback",
-      content:
-        "Positive response from Startup Hub regarding proposal. They requested additional information about pricing tiers and support options.",
-      category: "Client",
-      color: "#FFF4E5",
-      createdAt: "Oct 5, 2025, 2:15 PM",
-      isPinned: true,
-    },
-    {
-      id: 3,
-      title: "Project Ideas",
-      content:
-        "New CRM features to implement: automated email sequences, advanced reporting dashboard, mobile app integration, and AI-powered lead scoring.",
-      category: "Ideas",
-      color: "#E5F4FF",
-      createdAt: "Oct 4, 2025, 11:00 AM",
-      isPinned: false,
-    },
-    {
-      id: 4,
-      title: "Weekly Goals",
-      content:
-        "Complete client onboarding for 3 new accounts. Finalize Q4 marketing strategy. Review and optimize sales pipeline. Team meeting on Thursday at 2 PM.",
-      category: "Personal",
-      color: "#F0E5FF",
-      createdAt: "Oct 3, 2025, 9:00 AM",
-      isPinned: false,
-    },
-    {
-      id: 5,
-      title: "Research Notes",
-      content:
-        "Competitor analysis shows strong demand for integrated communication tools. Consider adding Slack/Teams integration. User feedback indicates need for better mobile experience.",
-      category: "Research",
-      color: "#E5FFE5",
-      createdAt: "Oct 2, 2025, 4:45 PM",
-      isPinned: true,
-    },
-    {
-      id: 6,
-      title: "Bug Fixes",
-      content:
-        "Fixed login authentication issue. Updated email notification system. Resolved dashboard loading delay. Need to test on staging before deployment.",
-      category: "Development",
-      color: "#FFE5F4",
-      createdAt: "Oct 1, 2025, 6:20 PM",
-      isPinned: false,
-    },
-  ]);
+     const { user } = useAuth();
+  
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
@@ -104,6 +52,27 @@ const Notes = () => {
     "Research",
     "Development",
   ];
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotes = async () => {
+      try {
+        const res = await api.get("/notes", {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+        setNotes(res.data);
+      } catch (err) {
+        console.error("Error fetching notes:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotes();
+  }, [user]);
 
   const sortOptions = ["Recent", "Oldest", "A-Z", "Z-A"];
 
@@ -133,34 +102,38 @@ const Notes = () => {
     });
   };
 
-  const handleSaveNote = (e) => {
-    e.preventDefault();
-    const validation = validateForm();
-    if (validation) {
-      setError(validation);
-      return;
-    }
+  const handleSaveNote = async (e) => {
+  e.preventDefault();
+  const validation = validateForm();
+  if (validation) {
+    setError(validation);
+    return;
+  }
 
-    if (selectedNote.id) {
-      setNotes(notes.map((n) => (n.id === selectedNote.id ? selectedNote : n)));
+  try {
+    if (selectedNote._id) {
+      // Update existing note
+      const res = await api.put(`/notes/${selectedNote._id}`, selectedNote, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setNotes(notes.map((n) => (n._id === selectedNote._id ? res.data : n)));
       setIsEditFormOpen(false);
     } else {
-      setNotes([
-        ...notes,
-        {
-          ...selectedNote,
-          id: Date.now(),
-          createdAt: new Date().toLocaleString("en-US", {
-            dateStyle: "short",
-            timeStyle: "short",
-          }),
-        },
-      ]);
+      // Add new note
+      const res = await api.post("/notes", selectedNote, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setNotes([res.data, ...notes]);
       setIsAddFormOpen(false);
     }
-    setError("");
     setSelectedNote(null);
-  };
+    setError("");
+  } catch (err) {
+    console.error("Error saving note:", err);
+    setError("Failed to save note. Please try again.");
+  }
+};
+
 
   const handleEditNote = (note) => {
     setSelectedNote(note);
@@ -176,18 +149,31 @@ const Notes = () => {
     setDeleteConfirm(note);
   };
 
-  const handleDelete = () => {
-    setNotes(notes.filter((n) => n.id !== deleteConfirm.id));
+  const handleDelete = async () => {
+  if (!deleteConfirm?._id) return;
+  try {
+    await api.delete(`/notes/${deleteConfirm._id}`, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    setNotes(notes.filter((n) => n._id !== deleteConfirm._id));
     setDeleteConfirm(null);
-  };
+  } catch (err) {
+    console.error("Error deleting note:", err);
+  }
+};
 
-  const handleTogglePin = (noteId) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === noteId ? { ...note, isPinned: !note.isPinned } : note
-      )
-    );
-  };
+
+  const handleTogglePin = async (noteId) => {
+  try {
+    const res = await api.patch(`/notes/${noteId}/pin`, {}, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    setNotes(notes.map((n) => (n._id === noteId ? res.data : n)));
+  } catch (err) {
+    console.error("Error toggling pin:", err);
+  }
+};
+
 
   const closeModal = () => {
     setIsAddFormOpen(false);
@@ -251,13 +237,13 @@ const Notes = () => {
     </p>
   </div>
 
-  <button
-    className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-    onClick={handleAddNote}
-  >
-    <FaPlus className="w-4 h-4" />
-    Add Note
-  </button>
+   <button
+      className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+      onClick={handleAddNote}
+    >
+      <FaPlus className="w-4 h-4" />
+      Add Note
+    </button>
 </motion.div>
 
           {/* Filters Section */}
@@ -614,7 +600,7 @@ const Notes = () => {
   >
     {selectedNote?.category || "Select Category"}
     <FaChevronDown
-      className={`transition-transform duration-300 ₹{
+      className={`transition-transform duration-300 ${
         showCategoryDropdown ? "rotate-180" : ""
       } text-gray-400`}
     />
@@ -661,7 +647,7 @@ const Notes = () => {
                     onClick={() =>
                       setSelectedNote({ ...selectedNote, color: color.value })
                     }
-                    className={`w-10 h-10 rounded-full border-2 transition-all ₹{
+                    className={`w-10 h-10 rounded-full border-2 transition-all ${
                       selectedNote?.color === color.value
                         ? "border-rose-500 scale-110"
                         : "border-gray-300"

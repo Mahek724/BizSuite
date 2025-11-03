@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
+import axios from "axios";
 import Navbar from "../components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,64 +28,8 @@ import {
 } from "react-icons/fa";
 
 const Leads = () => {
-  const [leads, setLeads] = useState([
-    {
-      id: 1,
-      name: "James Wilson",
-      email: "jwilson@startup.io",
-      company: "Startup Hub",
-      value: 15000,
-      stage: "New",
-      source: "Website",
-      assignedTo: "John Doe",
-      createdAt: "10/4/2025, 1:30:00 PM",
-    },
-    {
-      id: 2,
-      name: "Anna Martinez",
-      email: "anna@digitalagency.com",
-      company: "Digital Agency Co",
-      value: 25000,
-      stage: "Contacted",
-      source: "Referral",
-      assignedTo: "Jane Smith",
-      createdAt: "10/3/2025, 2:15:00 PM",
-    },
-    {
-      id: 3,
-      name: "Robert Taylor",
-      email: "rtaylor@consulting.com",
-      company: "Taylor Consulting",
-      value: 45000,
-      stage: "Deal",
-      source: "Cold Call",
-      assignedTo: "John Doe",
-      createdAt: "10/2/2025, 10:00:00 AM",
-    },
-    {
-      id: 4,
-      name: "Sophie Kim",
-      email: "skim@ecommerce.com",
-      company: "E-Commerce Plus",
-      value: 35000,
-      stage: "Won",
-      source: "Social Media",
-      assignedTo: "Jane Smith",
-      createdAt: "10/1/2025, 9:30:00 AM",
-    },
-    {
-      id: 5,
-      name: "Maria Garcia",
-      email: "mgarcia@healthcare.com",
-      company: "Healthcare Plus",
-      value: 30000,
-      stage: "Lost",
-      source: "Website",
-      assignedTo: "Jane Smith",
-      createdAt: "9/30/2025, 3:45:00 PM",
-    },
-  ]);
-
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -97,6 +42,11 @@ const Leads = () => {
   const [isAssignDropdownOpen, setIsAssignDropdownOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
 
+  const userRole = localStorage.getItem("role"); // e.g. "Admin" or "Staff"
+  console.log("User role from localStorage:", userRole);
+
+
+
   const [filters, setFilters] = useState({
     stage: "All Stages",
     source: "All Sources",
@@ -108,9 +58,9 @@ const Leads = () => {
     email: "",
     company: "",
     value: 0,
-    stage: "New",
-    source: "Website",
-    assignedTo: "John Doe",
+    stage: "",
+    source: "",
+    assignedTo: "",
   });
 
   const stages = [
@@ -288,7 +238,7 @@ const Leads = () => {
   <div className="flex items-center gap-3">
     <div className="flex bg-gray-100 rounded-lg p-1">
       <button
-        className={`p-2 rounded-md transition-all ₹{
+        className={`p-2 rounded-md transition-all ${
           viewMode === "kanban"
             ? "bg-white text-rose-400 shadow-sm"
             : "text-gray-500"
@@ -298,7 +248,7 @@ const Leads = () => {
         <FaTh className="w-5 h-5" />
       </button>
       <button
-        className={`p-2 rounded-md transition-all ₹{
+        className={`p-2 rounded-md transition-all ${
           viewMode === "list"
             ? "bg-white text-rose-400 shadow-sm"
             : "text-gray-500"
@@ -309,13 +259,17 @@ const Leads = () => {
       </button>
     </div>
 
-    <button
-      className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-      onClick={() => setShowAddModal(true)}
-    >
-      <FaPlus className="w-4 h-4" />
-      Add Lead
-    </button>
+    {userRole !== "Staff" && (
+  <button
+    className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+    onClick={() => setShowAddModal(true)}
+  >
+    <FaPlus className="w-4 h-4" />
+    Add Lead
+  </button>
+)}
+
+
   </div>
 </motion.div>
 
@@ -473,7 +427,7 @@ const Leads = () => {
               {getLeadsByStage(stage).map((lead) => (
                 <motion.div
                   key={lead.id}
-                  className={`bg-white rounded-xl p-4 border-l-4 ₹{getStageBorderColor(
+                  className={`bg-white rounded-xl p-4 border-l-4 ${getStageBorderColor(
                     stage
                   )} cursor-move shadow-sm hover:shadow-md transition-all duration-200`}
                   draggable
@@ -502,7 +456,7 @@ const Leads = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <FaDollarSign className="text-rose-400 w-3 h-3 flex-shrink-0" />
-                      <span>₹{lead.value.toLocaleString()}</span>
+                      <span>${lead.value.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <FaUser className="text-rose-400 w-3 h-3 flex-shrink-0" />
@@ -627,7 +581,7 @@ const Leads = () => {
               <td className="py-3 px-4">
                 <div className="flex items-center gap-2">
                   <FaDollarSign className="text-rose-400" />
-                  ₹{lead.value.toLocaleString()}
+                  ${lead.value.toLocaleString()}
                 </div>
               </td>
 
@@ -650,7 +604,7 @@ const Leads = () => {
               {/* 🚩 Stage with color badges */}
               <td className="py-3 px-4">
                 <span
-                  className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ₹{stageClass}`}
+                  className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${stageClass}`}
                 >
                   {lead.stage}
                 </span>
@@ -749,7 +703,7 @@ const Leads = () => {
                       [field]: type === "number" ? parseInt(e.target.value) || 0 : e.target.value,
                     })
                   }
-                  placeholder={`Enter ₹{label.toLowerCase()}`}
+                  placeholder={`Enter ${label.toLowerCase()}`}
                 />
               </div>
             ))}
@@ -773,7 +727,7 @@ const Leads = () => {
                     }
                   >
                     <span className="text-sm font-medium">
-                      {formData[field] || `Select ₹{label}`}
+                      {formData[field] || `Select ${label}`}
                     </span>
                     <FaChevronDown className="ml-2 text-[#E50046]" />
                   </div>
@@ -910,7 +864,7 @@ const Leads = () => {
                       [field]: type === "number" ? parseInt(e.target.value) || 0 : e.target.value,
                     })
                   }
-                  placeholder={`Enter ₹{label.toLowerCase()}`}
+                  placeholder={`Enter ${label.toLowerCase()}`}
                 />
               </div>
             ))}
@@ -933,7 +887,7 @@ const Leads = () => {
           {formData.stage || "Select a stage"}
         </span>
         <FaChevronDown
-          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ₹{
+          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ${
             isStageOpen ? "rotate-180" : ""
           }`}
         />
@@ -974,7 +928,7 @@ const Leads = () => {
           {formData.source || "Select a source"}
         </span>
         <FaChevronDown
-          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ₹{
+          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ${
             isSourceOpen ? "rotate-180" : ""
           }`}
         />
@@ -1015,7 +969,7 @@ const Leads = () => {
           {formData.assignedTo || "Select a staff member"}
         </span>
         <FaChevronDown
-          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ₹{
+          className={`ml-2 text-[#E50046] transform transition-transform duration-300 ${
             isAssignDropdownOpen ? "rotate-180" : ""
           }`}
         />
@@ -1108,7 +1062,7 @@ const Leads = () => {
             { label: "Lead Name", value: selectedLead.name, icon: <FaUser className="text-rose-400" /> },
             { label: "Email", value: selectedLead.email, icon: <FaEnvelope className="text-rose-400" /> },
             { label: "Company", value: selectedLead.company, icon: <FaBuilding className="text-rose-400" /> },
-            { label: "Value", value: `₹₹{selectedLead.value.toLocaleString()}`, icon: <FaDollarSign className="text-rose-400" /> },
+            { label: "Value", value: `$${selectedLead.value.toLocaleString()}`, icon: <FaDollarSign className="text-rose-400" /> },
             { label: "Stage", value: selectedLead.stage, icon: <FaLayerGroup className="text-rose-400" /> },
             { label: "Source", value: selectedLead.source, icon: <FaLink className="text-rose-400" /> },
             { label: "Created At", value: selectedLead.createdAt, icon: <FaCalendarAlt className="text-rose-400" /> },

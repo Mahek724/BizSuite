@@ -159,7 +159,7 @@ const Dashboard = () => {
       {/* Subtext aligned perfectly under icon */}
 <div className="flex mt-2">
   <div className="w-[1.2rem] shrink-0"></div> {/* spacer same width as icon box */}
-  <p className={`text-sm ₹{card.changeColor}`}>
+  <p className={`text-sm ${card.changeColor}`}>
     {card.change} <span className="text-gray-500">{card.sub}</span>
   </p>
 </div>
@@ -213,14 +213,14 @@ const Dashboard = () => {
                             fontSize={12}
                             fontWeight={600}
                           >
-                            {`₹{name}: ₹{value} (₹{(percent * 100).toFixed(1)}%)`}
+                            {`${name}: {value} (${(percent * 100).toFixed(1)}%)`}
                           </text>
                         );
                       }}
                     >
                       {pieData.map((entry, index) => (
                         <Cell
-                          key={`cell-₹{index}`}
+                          key={`cell-${index}`}
                           fill={pieColors[index % pieColors.length]}
                         />
                       ))}

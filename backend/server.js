@@ -1,26 +1,38 @@
+import cors from "cors";
+import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
-import express from "express";
-
-import cors from "cors";
-import chalk from "chalk"; // for colors
+import chalk from "chalk";
 import connectDB from "./config/db.js";
-import authRoutes from "./routes/auth.js";
 import session from "express-session";
 import passport from "./config/passport.js";
 
+import authRoutes from "./routes/auth.js";
+import clientRoutes from "./routes/clients.js";
+import leadRoutes from "./routes/leadRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import noteRoutes from "./routes/noteRoutes.js";
 
 
 const app = express();
 
-// middlewares
-app.use(express.json());
+// ✅ Apply CORS first (before anything else)
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(",") || ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://stackit-frontend-nqky.onrender.com",
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+
+app.use(express.json());
+
+// ✅ Sessions + passport after CORS
 app.use(
   session({
     secret: process.env.JWT_SECRET,
@@ -31,18 +43,21 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// routes
+// ✅ Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/clients", clientRoutes);
+app.use("/api/leads", leadRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/notes", noteRoutes);
 
-// start server
+
+// ✅ Start Server
 const start = async () => {
   try {
     await connectDB(process.env.MONGO_URI);
-    console.log(chalk.green("✅ MongoDB Connected")); // colored message
+    console.log(chalk.green("✅ MongoDB Connected"));
     app.listen(process.env.PORT || 5000, () =>
-      console.log(
-        chalk.cyan(`🚀 Server running on port ₹{process.env.PORT || 5000}`)
-      )
+      console.log(chalk.cyan(`🚀 Server running on port ${process.env.PORT || 5000}`))
     );
   } catch (err) {
     console.error(chalk.red("❌ Error connecting to MongoDB"), err.message);

@@ -9,8 +9,8 @@ import Leads from "./pages/Leads";
 import Tasks from "./pages/Tasks";
 import Notes from "./pages/Notes";
 import Activity from "./pages/Activity";
+import Settings from "./pages/Settings"; // Make sure you import Settings if using
 
-// Converted App to named export
 export function App() {
   const { user, loading } = useAuth();
 
@@ -19,26 +19,49 @@ export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* If no user → show AuthPage */}
-        {!user && <Route path="/*" element={<AuthPage />} />}
+        {/* No user: AuthPage only */}
+        {!user && (
+          <>
+            <Route path="/*" element={<AuthPage />} />
+            <Route path="/forgotpassword" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </>
+        )}
 
-        {/* TODO: Add a home or protected route later */}
-        {user && <Route path="/*" element={<h2>Welcome!</h2>} />}
+        {/* User is logged in: protect routes */}
+        {user && (
+          <>
+            {/* Admin only */}
+            <Route path="/dashboard" element={
+              user.role === "Admin" ? <Dashboard /> : <Navigate to="/clients" />
+            } />
+            <Route path="/settings" element={
+              user.role === "Admin" ? <Settings /> : <Navigate to="/clients" />
+            } />
 
-        <Route path="/forgotpassword" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/leads" element={<Leads />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/notes" element={<Notes />} />
-        <Route path="/activity" element={<Activity />} />
+            {/* Accessible to both roles */}
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/leads" element={<Leads />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/notes" element={<Notes />} />
+            <Route path="/activity" element={<Activity />} />
 
-        {/* Fallback redirect */}
-        <Route path="*" element={<Navigate to="/" />} />
+            {/* Password routes for logged-in users (optional, or restrict) */}
+            <Route path="/forgotpassword" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+            {/* Fallback: go to home (could make this /clients for staff) */}
+            <Route path="*" element={
+              user.role === "Admin"
+                ? <Navigate to="/dashboard" />
+                : <Navigate to="/clients" />
+            } />
+          </>
+        )}
       </Routes>
     </BrowserRouter>
   );
 }
 export default App;
-

@@ -9,12 +9,14 @@ import {
   Activity,
   Settings,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext"; // <-- import
 
 const Sidebar = () => {
+  const { user } = useAuth(); // <-- get user
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
+  let menuItems = [
     { name: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/dashboard" },
     { name: "Clients", icon: <Users size={18} />, path: "/clients" },
     { name: "Leads", icon: <UserPlus size={18} />, path: "/leads" },
@@ -23,6 +25,13 @@ const Sidebar = () => {
     { name: "Activity", icon: <Activity size={18} />, path: "/activity" },
     { name: "Settings", icon: <Settings size={18} />, path: "/settings" },
   ];
+
+  // Filter for Staff
+  if (user?.role === "Staff") {
+    menuItems = menuItems.filter(
+      (item) => item.name !== "Dashboard" && item.name !== "Settings"
+    );
+  }
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -52,7 +61,7 @@ const Sidebar = () => {
             onClick={() => handleNavigation(item.path)}
             className={`flex items-center gap-3 px-4 py-2 rounded-xl text-base font-medium transition-all duration-200
               outline-none focus:outline-none focus:ring-0
-              ₹{
+              ${
                 location.pathname === item.path
                   ? "bg-white text-rose-600 shadow-md"
                   : "bg-transparent text-white hover:bg-white/25 hover:text-white hover:shadow-inner backdrop-blur-sm outline-none"
