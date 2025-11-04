@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaFilter,
@@ -15,7 +17,6 @@ import {
   FaCalendar,
   FaFileAlt,
   FaTasks,
-  FaHandshake,
   FaThumbsUp,
   FaComment,
   FaThumbtack,
@@ -24,82 +25,20 @@ import {
   FaTrash,
 } from "react-icons/fa";
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE + "/api",
+  // If you use tokens in a different header or format, adjust as needed.
+});
+
 const Activity = () => {
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      type: "Lead",
-      title: "New Lead Added",
-      description: "Sarah Johnson from TechCorp Solutions was added as a new lead",
-      user: {
-        name: "John Doe",
-        initials: "JD",
-        color: "#F87171",
-      },
-      timestamp: "Oct 6, 2025, 3:30 PM",
-      icon: FaUser,
-      bgColor: "bg-blue-100",
-      iconColor: "text-blue-600",
-      badge: "Lead",
-      badgeBg: "bg-blue-100",
-      badgeText: "text-blue-600",
-      likes: 3,
-      comments: [],
-      isPinned: false,
-      hasLiked: false,
-    },
-    {
-      id: 2,
-      type: "Task",
-      title: "Task Completed",
-      description: "Completed 'Follow up with TechCorp Solutions' task with successful outcome",
-      user: {
-        name: "John Doe",
-        initials: "JD",
-        color: "#F87171",
-      },
-      timestamp: "Oct 6, 2025, 2:15 PM",
-      icon: FaCheckCircle,
-      bgColor: "bg-green-100",
-      iconColor: "text-green-600",
-      badge: "Task",
-      badgeBg: "bg-green-100",
-      badgeText: "text-green-600",
-      likes: 5,
-      comments: [{ user: "Jane Smith", text: "Great work!" }],
-      isPinned: true,
-      hasLiked: true,
-    },
-    {
-      id: 3,
-      type: "Deal",
-      title: "Deal Won - $45,000",
-      description: "Successfully closed deal with Taylor Consulting for Q4 services package",
-      user: {
-        name: "Jane Smith",
-        initials: "JS",
-        color: "#FB923C",
-      },
-      timestamp: "Oct 6, 2025, 1:00 PM",
-      icon: FaRupeeSign,
-      bgColor: "bg-green-100",
-      iconColor: "text-green-600",
-      badge: "Deal",
-      badgeBg: "bg-green-100",
-      badgeText: "text-green-600",
-      likes: 12,
-      comments: [
-        { user: "Admin", text: "Congratulations! 🎉" },
-        { user: "John Doe", text: "Amazing!" },
-      ],
-      isPinned: true,
-      hasLiked: true,
-    },
-  ]);
+  const { user } = useAuth();
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const [filters, setFilters] = useState({
     activityType: "All Types",
-    user: "All Users",
+    user: "All Staff",
     dateRange: "Last 7 Days",
     openActivityType: false,
     openUser: false,
@@ -112,6 +51,7 @@ const Activity = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [newComment, setNewComment] = useState("");
+  const [staffOptions, setStaffOptions] = useState(["All Staff"]);
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editActivity, setEditActivity] = useState({
@@ -126,8 +66,8 @@ const Activity = () => {
     title: "",
     description: "",
     user: {
-      name: "John Doe",
-      initials: "JD",
+      name: user?.fullName || user?.name || "You",
+      initials: getInitials(user?.fullName || user?.name || "You"),
       color: "#F87171",
     },
   });
@@ -143,9 +83,17 @@ const Activity = () => {
     "Document",
   ];
 
-  const users = ["All Users", "John Doe", "Jane Smith"];
   const dateRanges = ["Today", "Last 7 Days", "Last 30 Days", "All Time"];
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+
+  function getInitials(name = "") {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }
 
   const getActivityConfig = (type) => {
     const configs = {
@@ -202,13 +150,126 @@ const Activity = () => {
     return configs[type] || configs.Lead;
   };
 
+  // Helper to get token (same fallback behavior you had)
+  const getToken = () =>
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token") ||
+    user?.token ||
+    "";
+
+  // Fetch activities from backend
+  const fetchActivities = useCallback(async () => {
+  setLoading(true);
+  setError(null);
+  try {
+    const token = getToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await api.get("/activities", { headers });
+
+    // Expecting: { activities: [...] } from backend
+    const serverActivities = Array.isArray(res.data?.activities)
+      ? res.data.activities
+      : [];
+
+    const normalized = serverActivities.map((a) => {
+  const config = getActivityConfig(a.type);
+
+  const likesCount =
+    typeof a.likesCount === "number"
+      ? a.likesCount
+      : Array.isArray(a.likes)
+      ? a.likes.length
+      : 0;
+
+
+      return {
+    id: a._id ?? a.id ?? Date.now() + Math.random(),
+    title: a.title ?? "",
+    description: a.description ?? "",
+    type: a.type ?? "Lead",
+    badge: a.type ?? "Lead",
+    timestamp: a.timestamp ?? a.createdAt ?? new Date().toISOString(),
+    likes: likesCount,
+    // server should send isLikedByUser computed per caller:
+    hasLiked: typeof a.isLikedByUser === "boolean" ? a.isLikedByUser : false,
+    // inside fetchActivities mapping, normalize comments:
+comments: Array.isArray(a.comments)
+  ? a.comments.map((c) => ({
+      text: c.text ?? c,
+      user:
+        c && typeof c.user === "object"
+          ? { fullName: c.user.fullName || c.user.name, ...c.user }
+          : typeof c.user === "string"
+          ? c.user
+          : "Unknown",
+    }))
+  : [],
+
+    isPinned: !!a.isPinned,
+    user: {
+      fullName: a.user?.fullName || a.user?.name || "Unknown",
+      name: a.user?.fullName || a.user?.name || "Unknown",
+      initials: getInitials(a.user?.fullName || a.user?.name || "U"),
+      color: a.user?.color || "#F87171",
+    },
+    ...config,
+  };
+    });
+
+    setActivities(normalized);
+  } catch (err) {
+    console.error("Failed to fetch activities:", err?.response?.data ?? err.message);
+    setError("Failed to load activities");
+  } finally {
+    setLoading(false);
+  }
+}, [user]);
+
+  // Fetch staff list (admin only) - now using api and Authorization
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const token = getToken();
+        if (!token) return;
+        const res = await api.get("/auth/staff", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.data?.staff) {
+          console.warn("No staff data found in response:", res.data);
+          return;
+        }
+
+        const uniqueStaff = Array.from(
+          new Set(res.data.staff.map((s) => s.fullName))
+        );
+
+        setStaffOptions(["All Staff", ...uniqueStaff]);
+      } catch (err) {
+        console.error(
+          "Failed to fetch staff list:",
+          err?.response?.data ?? err.message
+        );
+      }
+    };
+
+    if (user?.role === "admin") fetchStaff();
+  }, [user]);
+
+  // Initial load
+  useEffect(() => {
+    fetchActivities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchActivities]);
+
   const filteredActivities = activities
     .filter((activity) => {
       const typeMatch =
         filters.activityType === "All Types" ||
         activity.type === filters.activityType;
       const userMatch =
-        filters.user === "All Users" || activity.user.name === filters.user;
+        filters.user === "All Staff" || activity.user.name === filters.user;
+      // dateRange filter can be implemented on server or with this client helper if required
       return typeMatch && userMatch;
     })
     .sort((a, b) => {
@@ -233,48 +294,135 @@ const Activity = () => {
     setShowTypeDropdown(false);
   };
 
-  const handleAddActivity = () => {
+  // ADD activity -> POST to backend
+  const handleAddActivity = async (e) => {
+    e?.preventDefault?.();
     if (!newActivity.title.trim() || !newActivity.description.trim()) {
       alert("Please fill in all fields");
       return;
     }
 
+    const token = getToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    // Build payload
+    const payload = {
+      title: newActivity.title,
+      description: newActivity.description,
+      type: newActivity.type,
+      user: newActivity.user,
+    };
+
+    // optimistic UI: add a temporary entry
     const config = getActivityConfig(newActivity.type);
-    const activity = {
-      id: Date.now(),
-      ...newActivity,
+    const tempActivity = {
+      id: Date.now() + Math.random(),
+      ...payload,
       ...config,
       badge: newActivity.type,
-      timestamp: new Date().toLocaleString(),
+      timestamp: new Date().toISOString(),
       likes: 0,
       comments: [],
       isPinned: false,
       hasLiked: false,
     };
 
-    setActivities([activity, ...activities]);
+    setActivities((prev) => [tempActivity, ...prev]);
     setShowAddModal(false);
-    setNewActivity({
-      type: "Lead",
-      title: "",
-      description: "",
-      user: {
-        name: "John Doe",
-        initials: "JD",
-        color: "#F87171",
-      },
-    });
+
+    try {
+      const res = await api.post("/activities", payload, { headers });
+      const created = res.data?.activity;
+      if (created) {
+        // replace temp with server activity (match by temp id via a local flag is tough,
+        // simplest approach: refetch or replace the first item if it looks like temp)
+        await fetchActivities();
+      } else {
+        // fallback: refetch
+        await fetchActivities();
+      }
+    } catch (err) {
+      console.error("Failed to add activity:", err?.response?.data ?? err.message);
+      // rollback optimistic add
+      setActivities((prev) => prev.filter((a) => a.id !== tempActivity.id));
+      alert("Failed to add activity. Please try again.");
+    } finally {
+      // reset new activity
+      setNewActivity({
+        type: "Lead",
+        title: "",
+        description: "",
+        user: {
+          name: user?.fullName || user?.name || "You",
+          initials: getInitials(user?.fullName || user?.name || "You"),
+          color: "#F87171",
+        },
+      });
+    }
   };
 
-  const handleDeleteActivity = (itemOrId) => {
+  // DELETE activity -> DELETE to backend
+  const handleDeleteActivity = async (itemOrId) => {
     const id = itemOrId?.id ?? itemOrId;
-    setActivities((prev) => prev.filter((a) => a.id !== id));
-    setShowDeleteConfirm(null);
-  };
+    const token = getToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const handleLike = (activityId) => {
-    setActivities(
-      activities.map((activity) =>
+    // optimistic remove
+    const prev = activities;
+    setActivities((p) => p.filter((a) => a.id !== id));
+    setShowDeleteConfirm(null);
+
+    try {
+      await api.delete(`/activities/${id}`, { headers });
+      // success, no further action
+    } catch (err) {
+      console.error("Failed to delete activity:", err?.response?.data ?? err.message);
+      setActivities(prev); // rollback
+      alert("Failed to delete activity. Please try again.");
+    }
+  };
+// LIKE activity -> PATCH to backend or POST to a /like endpoint
+const handleLike = async (activityId) => {
+  const token = getToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  // optimistic update (instant UI feedback)
+  setActivities((prev) =>
+    prev.map((activity) =>
+      activity.id === activityId
+        ? {
+            ...activity,
+            likes: activity.hasLiked ? activity.likes - 1 : activity.likes + 1,
+            hasLiked: !activity.hasLiked,
+          }
+        : activity
+    )
+  );
+
+  try {
+    const res = await api.patch(`/activities/${activityId}/like`, {}, { headers });
+    const updated = res.data?.activity;
+
+    if (updated) {
+      // sync with backend response
+      setActivities((prev) =>
+        prev.map((a) =>
+          a.id === updated._id
+            ? {
+                ...a,
+                likes: updated.likesCount,
+                hasLiked: updated.isLikedByUser,
+              }
+            : a
+        )
+      );
+    }
+  } catch (err) {
+    console.error("Failed to like activity:", err?.response?.data ?? err.message);
+
+    // rollback on error
+    setActivities((prev) =>
+      prev.map((activity) =>
         activity.id === activityId
           ? {
               ...activity,
@@ -284,13 +432,62 @@ const Activity = () => {
           : activity
       )
     );
-  };
+    alert("Failed to update like. Please try again.");
+  }
+};
 
-  const handleUpdateActivity = (e) => {
-    e.preventDefault();
 
+  // PIN activity -> PATCH to backend
+  const handlePin = async (activityId) => {
+  const token = getToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  // optimistic toggle for immediate feedback
+  setActivities((prev) =>
+    prev.map((activity) =>
+      activity.id === activityId ? { ...activity, isPinned: !activity.isPinned } : activity
+    )
+  );
+
+  try {
+    const res = await api.patch(`/activities/${activityId}/pin`, {}, { headers });
+    const isPinned = res?.data?.isPinned;
+
+    if (typeof isPinned === "boolean") {
+      // reconcile with server response so UI matches server-per-user pin state
+      setActivities((prev) =>
+        prev.map((a) => (a.id === activityId ? { ...a, isPinned } : a))
+      );
+    } else {
+      // if server didn't return expected shape, refetch canonical list
+      await fetchActivities();
+    }
+  } catch (err) {
+    console.error("Failed to pin activity:", err?.response?.data ?? err.message);
+    // rollback optimistic toggle
+    setActivities((prev) =>
+      prev.map((activity) =>
+        activity.id === activityId ? { ...activity, isPinned: !activity.isPinned } : activity
+      )
+    );
+    alert("Failed to update pin. Please try again.");
+  }
+};
+
+  // UPDATE activity -> PUT/PATCH to backend
+  const handleUpdateActivity = async (e) => {
+    e?.preventDefault?.();
+    const token = getToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const payload = {
+      title: editActivity.title,
+      description: editActivity.description,
+      type: editActivity.type,
+    };
+
+    // optimistic update locally
     const config = getActivityConfig(editActivity.type);
-
     setActivities((prev) =>
       prev.map((a) =>
         a.id === editActivity.id
@@ -300,31 +497,31 @@ const Activity = () => {
     );
 
     setShowEditModal(false);
+
+    try {
+      await api.put(`/activities/${editActivity.id}`, payload, { headers });
+      // optionally refetch to ensure canonical state
+      await fetchActivities();
+    } catch (err) {
+      console.error("Failed to update activity:", err?.response?.data ?? err.message);
+      alert("Failed to update activity. Please try again.");
+      await fetchActivities(); // restore server state
+    }
   };
 
-  const handlePin = (activityId) => {
-    setActivities(
-      activities.map((activity) =>
-        activity.id === activityId
-          ? { ...activity, isPinned: !activity.isPinned }
-          : activity
-      )
-    );
-  };
-
-  const handleAddComment = () => {
+  // ADD comment -> POST to backend
+  const handleAddComment = async () => {
     if (!newComment.trim() || !selectedActivity) return;
 
-    setActivities(
-      activities.map((activity) =>
+    const token = getToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    // optimistic comment
+    const commentObj = { user: user?.fullName || user?.name || "You", text: newComment };
+    setActivities((prev) =>
+      prev.map((activity) =>
         activity.id === selectedActivity.id
-          ? {
-              ...activity,
-              comments: [
-                ...activity.comments,
-                { user: "You", text: newComment },
-              ],
-            }
+          ? { ...activity, comments: [...activity.comments, commentObj] }
           : activity
       )
     );
@@ -332,6 +529,16 @@ const Activity = () => {
     setNewComment("");
     setShowCommentModal(false);
     setSelectedActivity(null);
+
+    try {
+      await api.post(`/activities/${selectedActivity.id}/comments`, { text: commentObj.text }, { headers });
+      // optionally refetch
+      await fetchActivities();
+    } catch (err) {
+      console.error("Failed to add comment:", err?.response?.data ?? err.message);
+      alert("Failed to add comment. Please try again.");
+      await fetchActivities();
+    }
   };
 
   const todayLeads = activities.filter(
@@ -340,8 +547,7 @@ const Activity = () => {
       new Date(a.timestamp).toDateString() === new Date().toDateString()
   ).length;
 
-  const closedDeals = activities.filter((a) => a.title.includes("Deal Won"))
-    .length;
+  const closedDeals = activities.filter((a) => a.title.includes("Deal Won")).length;
 
   const totalActivities = activities.length;
 
@@ -380,7 +586,18 @@ const Activity = () => {
             </div>
 
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                // when opening the Add modal ensure newActivity.user reflects current user
+                setNewActivity((prev) => ({
+                  ...prev,
+                  user: {
+                    name: user?.fullName || user?.name || "You",
+                    initials: getInitials(user?.fullName || user?.name || "You"),
+                    color: prev.user?.color || "#F87171",
+                  },
+                }));
+                setShowAddModal(true);
+              }}
               className="flex items-center gap-2 mr-6 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
             >
               <FaPlus className="w-4 h-4" />
@@ -388,7 +605,7 @@ const Activity = () => {
             </button>
           </motion.div>
 
-          {/* Summary Stats Cards - Full Width with padding */}
+          {/* Summary & rest of UI unchanged */}
           <div className="p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Today's Leads */}
@@ -539,14 +756,12 @@ const Activity = () => {
 
           {/* Filters Section */}
           <div className="px-6 pb-6">
-            {/* Filter Section — Styled Same as Notes.jsx */}
             <motion.div
               className="bg-white rounded-2xl p-4 md:p-6 shadow-sm mb-6 border border-gray-100"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              {/* Stylish Title */}
               <div className="flex items-center gap-2 mb-4">
                 <FaFilter className="text-[#E50046] w-5 h-5" />
                 <h2
@@ -561,7 +776,6 @@ const Activity = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Activity Type Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() =>
@@ -599,45 +813,45 @@ const Activity = () => {
                   )}
                 </div>
 
-                {/* User Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        openUser: !prev.openUser,
-                        openActivityType: false,
-                        openDate: false,
-                      }))
-                    }
-                    className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] shadow-sm cursor-pointer"
-                  >
-                    <span className="text-sm font-medium">{filters.user}</span>
-                    <FaChevronDown className="ml-2 text-[#E50046]" />
-                  </button>
+                {user.role === "admin" && (
+                  <div className="relative">
+                    <button
+                      onClick={() =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          openUser: !prev.openUser,
+                          openActivityType: false,
+                          openDate: false,
+                        }))
+                      }
+                      className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] shadow-sm cursor-pointer"
+                    >
+                      <span className="text-sm font-medium">{filters.user}</span>
+                      <FaChevronDown className="ml-2 text-[#E50046]" />
+                    </button>
 
-                  {filters.openUser && (
-                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                      {users.map((user) => (
-                        <div
-                          key={user}
-                          onClick={() =>
-                            setFilters({
-                              ...filters,
-                              user,
-                              openUser: false,
-                            })
-                          }
-                          className="px-4 py-2 text-gray-700 hover:bg-rose-100 cursor-pointer transition-colors"
-                        >
-                          {user}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {filters.openUser && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                        {staffOptions.map((staff) => (
+                          <div
+                            key={staff}
+                            onClick={() =>
+                              setFilters({
+                                ...filters,
+                                user: staff,
+                                openUser: false,
+                              })
+                            }
+                            className="px-4 py-2 text-gray-700 hover:bg-rose-100 cursor-pointer transition-colors"
+                          >
+                            {staff}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                {/* Date Range Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() =>
@@ -735,6 +949,14 @@ const Activity = () => {
                 </h2>
               </div>
 
+              {loading && (
+                <div className="text-center py-6 text-gray-500">Loading activities...</div>
+              )}
+
+              {error && (
+                <div className="text-center py-6 text-red-500">{error}</div>
+              )}
+
               <div className="space-y-4">
                 {regularActivities.map((activity, index) => {
                   const Icon = activity.icon;
@@ -760,7 +982,7 @@ const Activity = () => {
                 })}
               </div>
 
-              {filteredActivities.length === 0 && (
+              {filteredActivities.length === 0 && !loading && (
                 <div className="text-center py-12">
                   <div className="w-24 h-24 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                     <FaTasks className="w-12 h-12 text-gray-400" />
@@ -984,28 +1206,39 @@ const Activity = () => {
                 </div>
 
                 {selectedActivity.comments.length > 0 && (
-                  <div className="mb-4">
-                    <h4
-                      className="font-semibold mb-2"
-                      style={{ color: "#B5828C", fontFamily: "'Raleway', sans-serif" }}
-                    >
-                      Previous Comments:
-                    </h4>
-                    <div className="space-y-2">
-                      {selectedActivity.comments.map((comment, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-[#FFF6F5] border border-[#F5E3E0] p-3 rounded-lg"
-                        >
-                          <span className="font-medium text-gray-800">
-                            {comment.user}:
-                          </span>
-                          <span className="text-gray-600 ml-2">{comment.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+  <div className="mb-4">
+    <h4
+      className="font-semibold mb-2"
+      style={{ color: "#B5828C", fontFamily: "'Raleway', sans-serif" }}
+    >
+      Previous Comments:
+    </h4>
+    <div className="space-y-2">
+      {selectedActivity.comments.map((comment, idx) => {
+        // comment.user might be:
+        // - a populated user object: { _id, fullName, ... }
+        // - a plain string like "You"
+        // - or (rarely) undefined/null
+        const userName =
+          comment && typeof comment.user === "object"
+            ? comment.user.fullName || comment.user.name || "Unknown"
+            : typeof comment.user === "string"
+            ? comment.user
+            : "Unknown";
+
+        return (
+          <div
+            key={idx}
+            className="bg-[#FFF6F5] border border-[#F5E3E0] p-3 rounded-lg"
+          >
+            <span className="font-medium text-gray-800">{userName}:</span>
+            <span className="text-gray-600 ml-2">{comment.text}</span>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
 
                 <textarea
                   value={newComment}
@@ -1102,8 +1335,7 @@ const Activity = () => {
   );
 };
 
-// Activity Card Component
-// Activity Card Component (replace the existing ActivityCard in Activity.jsx)
+// Activity Card Component (unchanged UI, but receives dynamic activity data)
 const ActivityCard = ({
   activity,
   Icon,
@@ -1161,13 +1393,23 @@ const ActivityCard = ({
                 {activity.user.initials}
               </div>
               <span className="text-sm font-medium text-gray-700">
-                {activity.user.name}
-              </span>
+  {activity.user.fullName || activity.user.name}
+</span>
+
             </div>
 
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <FaCalendar className="w-3 h-3" />
-              <span>{activity.timestamp}</span>
+             <span>
+    {new Date(activity.timestamp).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })}
+  </span>
             </div>
           </div>
 
@@ -1206,7 +1448,6 @@ const ActivityCard = ({
               <FaThumbtack className="w-4 h-4" />
             </button>
 
-            {/* Edit button styled with pink background (same look as pin when active) */}
             <button
               onClick={() => handleEditClick(activity)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all bg-rose-100 text-rose-600 hover:bg-rose-200`}
@@ -1231,9 +1472,13 @@ const ActivityCard = ({
               <div className="space-y-2">
                 {activity.comments.map((comment, idx) => (
                   <div key={idx} className="flex items-start gap-2 text-sm">
-                    <span className="font-medium text-gray-800">
-                      {comment.user}:
-                    </span>
+                   <span className="font-medium text-gray-800">
+  {typeof comment.user === "object"
+    ? comment.user.fullName || comment.user.name || "Unknown"
+    : comment.user}
+  :
+</span>
+
                     <span className="text-gray-600">{comment.text}</span>
                   </div>
                 ))}

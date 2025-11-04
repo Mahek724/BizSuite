@@ -18,10 +18,13 @@ const noteSchema = new mongoose.Schema(
       type: String,
       default: "#FFE5E5",
     },
-    isPinned: {
-      type: Boolean,
-      default: false,
-    },
+
+    pinnedBy: {
+  type: [mongoose.Schema.Types.ObjectId],
+  ref: "User",
+  default: [],
+},
+
 
     // 👇 New field: track the user who created the note
     createdBy: {
@@ -29,6 +32,10 @@ const noteSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+  
+
+
   },
   {
     timestamps: true,

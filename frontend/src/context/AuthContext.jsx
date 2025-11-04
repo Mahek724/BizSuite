@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import { ThermometerSnowflakeIcon } from "lucide-react";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE + "/api",
@@ -8,8 +9,8 @@ const api = axios.create({
 // attach token automatically if present
 api.interceptors.request.use((config) => {
   const token =
-    localStorage.getItem("bizsuite_token") ||
-    sessionStorage.getItem("bizsuite_token");
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,8 +26,8 @@ function AuthProvider({ children }) {
 
   useEffect(() => {
   const token =
-    localStorage.getItem("bizsuite_token") ||
-    sessionStorage.getItem("bizsuite_token");
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token");
   if (!token) {
     setLoading(false);
     return;
@@ -41,8 +42,8 @@ function AuthProvider({ children }) {
       })
     )
     .catch(() => {
-      localStorage.removeItem("bizsuite_token");
-      sessionStorage.removeItem("bizsuite_token");
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
       setUser(null);
     })
     .finally(() => setLoading(false));
@@ -56,10 +57,10 @@ function AuthProvider({ children }) {
   };
 
   if (remember) {
-    localStorage.setItem("bizsuite_token", token);
+    localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(normalizedUser));
   } else {
-    sessionStorage.setItem("bizsuite_token", token);
+    sessionStorage.setItem("token", token);
     sessionStorage.setItem("user", JSON.stringify(normalizedUser));
   }
   setUser(normalizedUser);
@@ -68,9 +69,9 @@ function AuthProvider({ children }) {
 
 
 const logout = () => {
-  localStorage.removeItem("bizsuite_token");
+  localStorage.removeItem("token");
   localStorage.removeItem("user");
-  sessionStorage.removeItem("bizsuite_token");
+  sessionStorage.removeItem("token");
   sessionStorage.removeItem("user");
   setUser(null);
 

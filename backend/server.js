@@ -12,6 +12,8 @@ import clientRoutes from "./routes/clients.js";
 import leadRoutes from "./routes/leadRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js";
+
 
 
 const app = express();
@@ -21,10 +23,9 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://stackit-frontend-nqky.onrender.com",
     ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
@@ -49,6 +50,7 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notes", noteRoutes);
+app.use("/api/activities", activityRoutes);
 
 
 // ✅ Start Server

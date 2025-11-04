@@ -60,7 +60,7 @@ const Clients = () => {
 useEffect(() => {
     if (isAddFormOpen || isEditFormOpen) {
       api.get("/auth/staff", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       })
         .then(res => setStaffList(res.data.staff))
         .catch(() => setStaffList([]));
@@ -70,7 +70,7 @@ useEffect(() => {
   // When fetching clients, also populate assignedTo with staff info
   useEffect(() => {
     api.get("/clients", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
       .then(res => setClients(res.data.clients))
       .catch(() => setClients([]));
@@ -100,18 +100,18 @@ useEffect(() => {
   try {
     if (selectedClient._id) { // Edit mode
       await api.put(`/clients/${selectedClient._id}`, selectedClient, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setIsEditFormOpen(false);
     } else { // Add mode
       await api.post("/clients", selectedClient, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setIsAddFormOpen(false);
     }
     // Reload clients after save
     const res = await api.get("/clients", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
     setClients(res.data.clients);
     setSelectedClient(null);
@@ -155,10 +155,10 @@ useEffect(() => {
   const handleDelete = async () => {
   try {
     await api.delete(`/clients/${deleteConfirm._id}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
     const res = await api.get("/clients", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("bizsuite_token")}` }
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     });
     setClients(res.data.clients);
     setDeleteConfirm(null);
@@ -196,7 +196,9 @@ useEffect(() => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
+      <div className="sticky top-0 h-screen mr">
+        <Sidebar />
+      </div>
 
       <div className="flex-1">
       <Navbar />
@@ -232,12 +234,8 @@ useEffect(() => {
     Add Client
   </button>
 )}
-
-
   </motion.div>
 
-
-          {/* Filters Section */}
           {/* Filters Section */}
 <motion.div
   className="bg-white rounded-2xl p-4 md:p-6 shadow-sm mb-6 border border-gray-100"
@@ -327,12 +325,6 @@ useEffect(() => {
   </button>
 </div>
 
-
-
-          {/* Clients Grid */}
-          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"> */}
-          {/* Clients Grid */}
-{/* Clients Grid */}
 {/* Clients Section */}
 <div className="w-full px-4 md:px-6 lg:px-8">
   <AnimatePresence mode="wait">

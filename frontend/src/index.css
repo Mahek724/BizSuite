@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 /* Optional global reset */
-body {
+html, body, #root {
   margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
+  padding: 0;
+  height: 100%;
 }

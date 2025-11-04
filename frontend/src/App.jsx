@@ -9,12 +9,16 @@ import Leads from "./pages/Leads";
 import Tasks from "./pages/Tasks";
 import Notes from "./pages/Notes";
 import Activity from "./pages/Activity";
-import Settings from "./pages/Settings"; // Make sure you import Settings if using
+import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 
 export function App() {
   const { user, loading } = useAuth();
 
   if (loading) return <h3>Loading...</h3>;
+
+  // normalize and compute role flags once
+  const isAdmin = !!user && String(user.role || "").toLowerCase() === "admin";
 
   return (
     <BrowserRouter>
@@ -34,12 +38,14 @@ export function App() {
         {user && (
           <>
             {/* Admin only */}
-            <Route path="/dashboard" element={
-              user.role === "Admin" ? <Dashboard /> : <Navigate to="/clients" />
-            } />
-            <Route path="/settings" element={
-              user.role === "Admin" ? <Settings /> : <Navigate to="/clients" />
-            } />
+            <Route
+              path="/dashboard"
+              element={isAdmin ? <Dashboard /> : <Navigate to="/clients" />}
+            />
+            <Route
+              path="/settings"
+              element={isAdmin ? <Settings /> : <Navigate to="/clients" />}
+            />
 
             {/* Accessible to both roles */}
             <Route path="/clients" element={<Clients />} />
@@ -47,17 +53,17 @@ export function App() {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/notes" element={<Notes />} />
             <Route path="/activity" element={<Activity />} />
+            <Route path="/profile" element={<Profile />} />
 
             {/* Password routes for logged-in users (optional, or restrict) */}
             <Route path="/forgotpassword" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-            {/* Fallback: go to home (could make this /clients for staff) */}
-            <Route path="*" element={
-              user.role === "Admin"
-                ? <Navigate to="/dashboard" />
-                : <Navigate to="/clients" />
-            } />
+            {/* Fallback: go to home (Admin -> dashboard, Staff -> clients) */}
+            <Route
+              path="*"
+              element={isAdmin ? <Navigate to="/dashboard" /> : <Navigate to="/clients" />}
+            />
           </>
         )}
       </Routes>

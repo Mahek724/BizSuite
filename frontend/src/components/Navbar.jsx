@@ -15,6 +15,7 @@ const Navbar = () => {
     "/notes": "Notes",
     "/activity": "Activity",
     "/settings": "Settings",
+    "/profile": "Profile",
   };
 
   const title = routeTitles[location.pathname] || "BizSuite";
@@ -44,16 +45,23 @@ const Navbar = () => {
       <div className="flex items-center space-x-5">
         <div className="relative cursor-pointer">
           <Bell className="text-gray-600" size={20} />
-          <span className="absolute top-0 right-0 block w-2 h-2 bg-red-500 rounded-full"></span>
+          <span className="absolute top-0 right-0 block w-2 h-2 bg-red-500 rounded-full" />
         </div>
 
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-rose-200 text-rose-700 font-semibold rounded-full flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-rose-200 text-rose-700 font-semibold rounded-full flex items-center justify-center select-none">
             {displayName.charAt(0).toUpperCase()}
           </div>
-          <div className="text-sm leading-tight">
-            <p className="font-medium text-gray-800">{displayName}</p>
-            <p className="text-gray-500 text-xs">{displayRole}</p>
+
+          {/* Use block spans with no margin and very tight line-height to remove vertical gap.
+              'leading-none' + explicit 'm-0' ensures minimal space without changing header height. */}
+          <div className="flex flex-col justify-center">
+            <span className="block m-0 font-medium text-gray-800 text-[15px] leading-none">
+              {displayName}
+            </span>
+            <span className="block m-0.5 text-gray-500 text-[13px] leading-none">
+              {displayRole}
+            </span>
           </div>
         </div>
       </div>

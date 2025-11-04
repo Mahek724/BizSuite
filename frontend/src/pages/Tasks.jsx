@@ -52,8 +52,8 @@ const api = axios.create({
   });
 
   const token =
-  localStorage.getItem("bizsuite_token") ||
-  sessionStorage.getItem("bizsuite_token") ||
+  localStorage.getItem("token") ||
+  sessionStorage.getItem("token") ||
   user?.token;
 
 
@@ -74,8 +74,8 @@ useEffect(() => {
   const fetchStaff = async () => {
     try {
       const token =
-        localStorage.getItem("bizsuite_token") ||
-        sessionStorage.getItem("bizsuite_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token") ||
         user?.token;
 
       if (!token) {
@@ -121,8 +121,8 @@ useEffect(() => {
   const fetchTasks = async () => {
     try {
       const token =
-        localStorage.getItem("bizsuite_token") ||
-        sessionStorage.getItem("bizsuite_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token") ||
         user?.token;
 
       if (!token) return console.warn("⚠️ Missing token");
@@ -168,8 +168,8 @@ useEffect(() => {
 
   try {
     const token =
-      localStorage.getItem("bizsuite_token") ||
-      sessionStorage.getItem("bizsuite_token") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token") ||
       user?.token;
 
     const config = {

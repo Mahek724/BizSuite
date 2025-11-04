@@ -25,6 +25,8 @@ const api = axios.create({
 
 const Notes = () => {
      const { user } = useAuth();
+     const token = user?.token || localStorage.getItem("token");
+
   
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,25 +56,26 @@ const Notes = () => {
   ];
 
   useEffect(() => {
-    if (!user) return;
+  if (!token) return;
+  const fetchNotes = async () => {
+    try {
+      const { data } = await api.get("/notes", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotes(data);
+    } catch (err) {
+      console.error("Error fetching notes:", err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const fetchNotes = async () => {
-      try {
-        const res = await api.get("/notes", {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        });
-        setNotes(res.data);
-      } catch (err) {
-        console.error("Error fetching notes:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  fetchNotes(); // initial fetch
 
-    fetchNotes();
-  }, [user]);
+  const interval = setInterval(fetchNotes, 30000); // refresh every 30 seconds
+  return () => clearInterval(interval);
+}, [token]);
+
 
   const sortOptions = ["Recent", "Oldest", "A-Z", "Z-A"];
 
@@ -114,14 +117,14 @@ const Notes = () => {
     if (selectedNote._id) {
       // Update existing note
       const res = await api.put(`/notes/${selectedNote._id}`, selectedNote, {
-        headers: { Authorization: `Bearer ${user.token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setNotes(notes.map((n) => (n._id === selectedNote._id ? res.data : n)));
       setIsEditFormOpen(false);
     } else {
       // Add new note
       const res = await api.post("/notes", selectedNote, {
-        headers: { Authorization: `Bearer ${user.token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setNotes([res.data, ...notes]);
       setIsAddFormOpen(false);
@@ -153,7 +156,7 @@ const Notes = () => {
   if (!deleteConfirm?._id) return;
   try {
     await api.delete(`/notes/${deleteConfirm._id}`, {
-      headers: { Authorization: `Bearer ${user.token}` },
+      headers: { Authorization: `Bearer ${token}` },
     });
     setNotes(notes.filter((n) => n._id !== deleteConfirm._id));
     setDeleteConfirm(null);
@@ -166,7 +169,7 @@ const Notes = () => {
   const handleTogglePin = async (noteId) => {
   try {
     const res = await api.patch(`/notes/${noteId}/pin`, {}, {
-      headers: { Authorization: `Bearer ${user.token}` },
+      headers: {Authorization: `Bearer ${token}` },
     });
     setNotes(notes.map((n) => (n._id === noteId ? res.data : n)));
   } catch (err) {
@@ -202,9 +205,29 @@ const Notes = () => {
       }
     });
 
-  // Separate pinned and unpinned notes
-  const pinnedNotes = filteredNotes.filter((note) => note.isPinned);
-  const unpinnedNotes = filteredNotes.filter((note) => !note.isPinned);
+    const formatDate = (dateString) => {
+  const options = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  return new Date(dateString).toLocaleString("en-US", options);
+};
+
+const sortNotes = (list) => {
+  if (filters.sortBy === "Recent") return [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  if (filters.sortBy === "Oldest") return [...list].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  if (filters.sortBy === "A-Z") return [...list].sort((a, b) => a.title.localeCompare(b.title));
+  return [...list].sort((a, b) => b.title.localeCompare(a.title));
+};
+console.log("User in Notes:", user);
+
+const pinnedNotes = sortNotes(filteredNotes.filter(n => n.pinnedBy?.includes(user.id)));
+const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(user.id)));
+
 
   return (
     <div className="flex min-h-screen bg-gray-50 overflow-hidden">
@@ -351,7 +374,9 @@ const Notes = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {pinnedNotes.map((note, index) => (
                   <motion.div
-                    key={note.id}
+                    key={note._id}
+
+                    
                     className="rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer relative group"
                     style={{ backgroundColor: note.color }}
                     initial={{ opacity: 0, y: 20 }}
@@ -361,7 +386,7 @@ const Notes = () => {
                   >
                     {/* Pin Icon */}
                     <button
-                      onClick={() => handleTogglePin(note.id)}
+                      onClick={() => handleTogglePin(note._id)}
                       className="absolute top-3 right-3 text-rose-500 hover:text-rose-600 transition-colors"
                     >
                       <svg
@@ -389,8 +414,20 @@ const Notes = () => {
 
                     <div className="flex items-center gap-1 text-xs text-gray-600 mb-4">
                       <FaClock className="w-3 h-3" />
-                      <span>{note.createdAt}</span>
+                      <span>{formatDate(note.createdAt)}</span>
+
                     </div>
+
+                   {user?.role === "admin" && note.createdBy && (
+  <div className="mt-2 text-sm font-semibold text-gray-800">
+    {note.createdBy.fullName
+      ? `${note.createdBy.fullName} - ${note.createdBy.role.charAt(0).toUpperCase() + note.createdBy.role.slice(1)}`
+      : note.createdBy.role}
+  </div>
+)}
+
+
+
 
                     {/* Action Buttons */}
                     {/* Action Buttons - Always Visible */}
@@ -445,7 +482,7 @@ const Notes = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {unpinnedNotes.map((note, index) => (
                 <motion.div
-                  key={note.id}
+                  key={note._id}
                   className="rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer relative group"
                   style={{ backgroundColor: note.color }}
                   initial={{ opacity: 0, y: 20 }}
@@ -455,7 +492,7 @@ const Notes = () => {
                 >
                   {/* Pin Icon */}
                   <button
-                    onClick={() => handleTogglePin(note.id)}
+                    onClick={() => handleTogglePin(note._id)}
                     className="absolute top-3 right-3 text-gray-400 hover:text-rose-500 transition-colors"
                   >
                     <svg
@@ -483,11 +520,19 @@ const Notes = () => {
 
                   <div className="flex items-center gap-1 text-xs text-gray-600 mb-4">
                     <FaClock className="w-3 h-3" />
-                    <span>{note.createdAt}</span>
+                    <span>{formatDate(note.createdAt)}</span>
+
                   </div>
 
-                  {/* Action Buttons */}
-                  {/* Action Buttons - Always Visible */}
+                  {/* Created By (Visible only to admin) */}
+{user?.role === "admin" && note.createdBy && (
+  <div className="mt-2 text-sm font-semibold text-gray-800">
+    {note.createdBy.fullName
+      ? `${note.createdBy.fullName} - ${note.createdBy.role.charAt(0).toUpperCase() + note.createdBy.role.slice(1)}`
+      : note.createdBy.role}
+  </div>
+)}
+
 {/* Action Buttons - Always Visible with Different Colors */}
 <div className="flex gap-2 mt-4">
   {/* View Button - Blue */}
@@ -750,7 +795,7 @@ const Notes = () => {
                 <FaClock className="text-rose-400" /> Created At
               </label>
               <div className="text-base text-gray-800 border-2 border-gray-200 px-4 py-2.5 rounded-lg bg-gray-50">
-                {selectedNote.createdAt}
+                {formatDate(selectedNote.createdAt)}
               </div>
             </div>
           </div>
