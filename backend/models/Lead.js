@@ -17,6 +17,7 @@ const leadSchema = new mongoose.Schema(
       default: "Website",
     },
     assignedTo: { type: String, required: true },
+    
   },
   { timestamps: true }
 );

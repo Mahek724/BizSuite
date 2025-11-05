@@ -2,9 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional global reset */
-html, body, #root {
+/* Ensure there is no white gap outside the app and body uses the same bg */
+@layer base {
+  /* box-sizing reset */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  /* Make root elements full height, remove default margin/padding and set bg */
+  html, body, #root {
+  height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
-  height: 100%;
+  background-color: #F9FAFB;
+  overflow-x: hidden;
+}
+::-webkit-scrollbar-track { background: #F9FAFB; }
+  /* Improve font rendering (optional) */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* ensure page doesn't generate an unexpected white gutter */
+    min-width: 100vw;
+  }
+
+  /* Make sure scroll track uses same background so the thin gutter matches */
+  /* WebKit browsers (Chrome, Edge, Safari) */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.12);
+    border-radius: 9999px;
+  }
+
+  
 }

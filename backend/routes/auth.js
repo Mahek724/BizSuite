@@ -74,9 +74,21 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password, remember } = await loginSchema.validateAsync(req.body);
-    const user = await User.findOne({ email });
-    if (!user || !user.passwordHash) return res.status(400).json({ message: "Invalid credentials" });
 
+    let user = await User.findOne({ email });
+
+    // 🟢 Auto-create user if not found
+    if (!user) {
+      const hashed = await bcrypt.hash(password, 10);
+      user = await User.create({
+        fullName: email.split("@")[0],
+        email,
+        passwordHash: hashed,
+        role: "Staff",
+      });
+    }
+
+    // Password check (for normal users)
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(400).json({ message: "Invalid credentials" });
 

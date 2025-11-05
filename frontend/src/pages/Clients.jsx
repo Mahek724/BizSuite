@@ -195,7 +195,8 @@ useEffect(() => {
 ];
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    
+      <div className="flex min-h-screen bg-gray-50 w-screen">
       <div className="sticky top-0 h-screen mr">
         <Sidebar />
       </div>
@@ -205,6 +206,7 @@ useEffect(() => {
 
 
         <div className="p-6">
+
   {/* Header Section */}
   <motion.div
     className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
@@ -238,7 +240,8 @@ useEffect(() => {
 
           {/* Filters Section */}
 <motion.div
-  className="bg-white rounded-2xl p-4 md:p-6 shadow-sm mb-6 border border-gray-100"
+  className="bg-white rounded-xl p-4 md:p-5 shadow-sm mb-6 border border-gray-100 w-full"
+
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
   transition={{ delay: 0.2 }}

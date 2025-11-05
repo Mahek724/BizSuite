@@ -22,7 +22,7 @@ import {
   FaEdit,
   FaTrash,
   FaCheckCircle,
-  FaCircle,
+  FaRegCircle
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -303,7 +303,7 @@ useEffect(() => {
   });
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 w-screen">
       <Sidebar />
 
       <div className="flex-1">
@@ -538,43 +538,47 @@ useEffect(() => {
       ? "opacity-60 blur-[1px] hover:opacity-100 hover:blur-0"
       : "hover:bg-rose-50"
   }`}
-
-
-
                       variants={{
                         hidden: { opacity: 0, y: 10 },
                         show: { opacity: 1, y: 0 },
                       }}
                     >
                       {/* ✅ Title + Checkbox */}
-                      <td className="py-3 px-4 flex items-center gap-3">
-                        <button
-                          onClick={() => handleToggleComplete(task.id)}
-                          className="flex items-center justify-center w-5 h-5 border-2 border-rose-400 rounded-full focus:outline-none"
-                        >
-                          {task.completed ? (
-                            <FaCheckCircle className="text-rose-500 w-4 h-4" />
-                          ) : (
-                            <FaCircle className="text-rose-300 w-3.5 h-3.5" />
-                          )}
-                        </button>
-                        <div>
-                          <h4
-                            className={`font-semibold text-gray-800 ${
-                              task.completed ? "line-through text-gray-500" : ""
-                            }`}
-                          >
-                            {task.title}
-                          </h4>
-                          <p
-                            className={`text-xs text-gray-500 mt-0.5 ${
-                              task.completed ? "line-through text-gray-400" : ""
-                            }`}
-                          >
-                            {task.description}
-                          </p>
-                        </div>
-                      </td>
+                      {/* ✅ Title + Checkbox (updated to reduce title size and constrain width) */}
+<td className="py-3 px-4">
+  <div className="flex items-start gap-3">
+    {/* Status Icon (no button, just an icon) */}
+    {task.completed ? (
+      <FaCheckCircle className="text-rose-500 w-5 h-5 mt-1" />
+    ) : (
+      <FaRegCircle className="text-rose-300 w-5 h-5 mt-1" />
+    )}
+
+    {/* Title + Description */}
+    <div className="flex flex-col gap-0.5 min-w-0">
+      {/* Title */}
+      <h4
+        className={`text-base font-medium text-gray-800 leading-none ${
+          task.completed ? "line-through text-gray-500" : ""
+        } truncate`}
+        style={{ maxWidth: "48ch" }}
+        title={task.title}
+      >
+        {task.title}
+      </h4>
+
+      {/* Description (tight spacing) */}
+      <p
+        className={`text-xs text-gray-500 leading-tight ${
+          task.completed ? "line-through text-gray-400" : ""
+        } truncate`}
+        style={{ maxWidth: "60ch" }}
+      >
+        {task.description}
+      </p>
+    </div>
+  </div>
+</td>
 
                       {/* Due Date */}
                       <td className="py-3 px-4 text-gray-800 whitespace-nowrap">

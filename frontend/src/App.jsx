@@ -10,7 +10,6 @@ import Tasks from "./pages/Tasks";
 import Notes from "./pages/Notes";
 import Activity from "./pages/Activity";
 import Settings from "./pages/Settings";
-import Profile from "./pages/Profile";
 
 export function App() {
   const { user, loading } = useAuth();
@@ -53,7 +52,6 @@ export function App() {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/notes" element={<Notes />} />
             <Route path="/activity" element={<Activity />} />
-            <Route path="/profile" element={<Profile />} />
 
             {/* Password routes for logged-in users (optional, or restrict) */}
             <Route path="/forgotpassword" element={<ForgotPassword />} />
