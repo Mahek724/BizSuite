@@ -346,13 +346,19 @@ const Leads = () => {
   const editStageOptions = isAdmin ? stages.filter((s) => s !== "All Stages") : ["Won", "Lost"];
 
   return (
-    <div className="flex min-h-screen bg-gray-50 w-screen">
+  <div className="flex min-h-screen w-screen bg-gray-50 overflow-hidden">
+    {/* Sidebar - sticky on the left */}
+    <aside className="sticky top-0 h-screen">
       <Sidebar />
+    </aside>
 
-      <div className="flex-1">
+    {/* Main Section */}
+    <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      {/* Navbar - sticky at the top */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm">
         <Navbar />
-
-        <div className="p-6">
+      </div>
+ <div className="flex-1 overflow-y-auto p-6">
           {/* Header Section */}
           <motion.div
             className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"

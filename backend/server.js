@@ -16,6 +16,8 @@ import noteRoutes from "./routes/noteRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import userRoutes from "./routes/userRoutes.js"; 
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 const app = express();
 
@@ -51,6 +53,10 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/uploads", express.static("uploads"));
+app.use("/api/profile", profileRoutes);
+app.use("/api/notifications", notificationRoutes);
+
 
 // ✅ Start Server
 const start = async () => {

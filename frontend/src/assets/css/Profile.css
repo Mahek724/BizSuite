@@ -109,6 +109,18 @@
 .profile-sidebar {
   text-align: center;
 }
+/* make the actual photo smaller and crop it nicely */
+.profile-avatar-wrapper img {
+  width: 140px;        /* desired displayed size */
+  height: 140px;       /* keep square for circular crop */
+  object-fit: cover;   /* crop to fill without distortion */
+  border-radius: 50%;  /* circle */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  display: block;
+}
+
+
+
 
 .profile-avatar-section {
   padding-bottom: 20px;
@@ -123,8 +135,8 @@
 }
 
 .profile-avatar {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   background: linear-gradient(135deg, #d4a5a5 0%, #c89595 100%);
   display: flex;
@@ -325,46 +337,166 @@
   border-color: #9ca3af;
 }
 
+/* --- Additions for Change Password inline form --- */
+/* These should be appended or merged into your existing Profile.css file. */
+
+.change-password-form {
+  padding: 16px;
+  background: #fbfbfb;
+  border-radius: 10px;
+  border: 1px solid #eef2f4;
+}
+
+.change-password-form .form-row {
+  margin-bottom: 12px;
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon .form-control {
+  padding-right: 44px; /* space for the eye button */
+}
+
+.eye-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.eye-btn:hover {
+  color: #374151;
+  background: rgba(16,24,40,0.03);
+}
+
+/* Update / Cancel buttons */
+.btn-update-password {
+  background: linear-gradient(90deg,#F97373,#EF6C6C);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(231,70,90,0.08);
+}
+
+.btn-update-password:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  cursor: pointer;
+}
+
+/* Small helper text for errors */
+.change-password-form .text-danger {
+  color: #b00020;
+}
+
+/* Slight spacing adjustments for security card area */
+.profile-card .card-header-title + .change-password-btn,
+.profile-card .card-header-title + .change-password-form {
+  margin-top: 10px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .input-with-icon .form-control {
+    padding-right: 48px;
+  }
+  .eye-btn { right: 6px; width: 34px; height: 34px; }
+}
+
+
 /* Activity Summary */
 .activity-summary {
   background: linear-gradient(135deg, #fcd5ce 0%, #fbb4ae 50%, #ffb4a9 100%);
   border-radius: 12px;
-  padding: 24px;
-}
-
-.activity-title {
-  font-size: 20px;
-  font-weight: 700;
+  padding: 22px;
+  margin-bottom: 18px;
   color: white;
-  margin: 0 0 20px;
+  box-shadow: 0 8px 30px rgba(195, 87, 83, 0.12);
+  position: relative;
 }
 
-.activity-stats {
+/* Wide variant: 4 tiles for Activity page */
+.activity-summary.activity-summary--wide .activity-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* Default 3-col layout (used elsewhere) */
+.activity-summary .activity-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  align-items: stretch;
 }
 
-.stat-card {
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
+/* translucent/stat tile style */
+.activity-summary .stat-card {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
   border-radius: 12px;
-  padding: 20px;
+  padding: 18px;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.stat-number {
-  font-size: 32px;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 8px;
+/* number and label */
+.activity-summary .stat-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff; /* white number like in screenshot */
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
 }
 
-.stat-label {
+.activity-summary .stat-label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
+  color: rgba(255,255,255,0.95);
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+/* make numbers slightly smaller on small screens */
+@media (max-width: 768px) {
+  .activity-summary.activity-summary--wide .activity-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .activity-summary .stat-number { font-size: 22px; }
+  .activity-summary { padding: 16px; }
+}
+
+/* fallback for very small screens */
+@media (max-width: 480px) {
+  .activity-summary.activity-summary--wide .activity-stats {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Notification List */
@@ -452,7 +584,7 @@
 .logout-btn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #b67c71 0%, #f5beba 50%, #df8b7e 100%);
   border: none;
   border-radius: 8px;
   font-size: 15px;

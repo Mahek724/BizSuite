@@ -1,6 +1,9 @@
 import express from "express";
 import Note from "../models/Note.js";
 import { authenticate } from "../middleware/auth.js"; // ✅ make sure this exists
+import { sendNotification } from "../utils/sendNotification.js";
+import User from "../models/User.js"; // if not already imported
+
 
 const router = express.Router();
 
@@ -40,6 +43,18 @@ router.post("/", authenticate, async (req, res) => {
 
     // ✅ populate user details before sending response
     const populatedNote = await note.populate("createdBy", "fullName role email");
+    if (req.user.role === "Staff") {
+  const admins = await User.find({ role: "Admin" });
+  await sendNotification({
+    sender: req.user._id,
+    receivers: admins.map(a => a._id),
+    type: "NoteCreated",
+    message: `${req.user.fullName} added a new note: "${note.title}"`,
+    relatedId: note._id,
+    onModel: "Note",
+  });
+}
+
 
     res.status(201).json(populatedNote);
   } catch (error) {

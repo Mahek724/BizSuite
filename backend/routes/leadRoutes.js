@@ -2,6 +2,8 @@ import express from "express";
 import mongoose from "mongoose";
 import Lead from "../models/Lead.js";
 import { authenticate } from "../middleware/auth.js";
+import User from "../models/User.js"; // if not already imported
+import { sendNotification } from "../utils/sendNotification.js";
 
 const router = express.Router();
 
@@ -13,6 +15,20 @@ router.post("/", authenticate, async (req, res) => {
     }
 
     const lead = await Lead.create(req.body);
+    if (req.body.assignedTo) {
+  const staff = await User.findOne({ fullName: req.body.assignedTo });
+  if (staff) {
+    await sendNotification({
+      sender: req.user._id,
+      receiver: staff._id,
+      type: "LeadAssigned",
+      message: `A new lead "${req.body.name}" has been assigned to you.`,
+      relatedId: lead._id,
+      onModel: "Lead",
+    });
+  }
+}
+
     res.status(201).json(lead);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -93,6 +109,18 @@ router.put("/:id", authenticate, async (req, res) => {
 
       lead.stage = req.body.stage;
       await lead.save();
+      if (["Won", "Lost"].includes(lead.stage)) {
+  const admins = await User.find({ role: "Admin" });
+  await sendNotification({
+    sender: req.user._id,
+    receivers: admins.map(a => a._id),
+    type: "LeadStageChanged",
+    message: `${req.user.fullName} moved lead "${lead.name}" to ${lead.stage}`,
+    relatedId: lead._id,
+    onModel: "Lead",
+  });
+}
+
       return res.json(lead);
     }
 

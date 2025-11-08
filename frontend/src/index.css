@@ -11,7 +11,6 @@
 
   /* Make root elements full height, remove default margin/padding and set bg */
   html, body, #root {
-  height: 100%;
   min-height: 100%;
   margin: 0;
   padding: 0;
@@ -38,6 +37,19 @@
     background: rgba(0,0,0,0.12);
     border-radius: 9999px;
   }
+
+  @keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 1.5s infinite ease-in-out;
+}
 
   
 }

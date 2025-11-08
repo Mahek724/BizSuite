@@ -247,14 +247,17 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#fffaf7] text-[#4a2d2a]">
+  <div className="flex min-h-screen bg-[#fffaf7] text-[#4a2d2a] overflow-hidden">
+    {/* Sidebar - stays sticky on the left */}
+    <aside className="sticky top-0 h-screen">
       <Sidebar />
+    </aside>
 
-      {/* Right section */}
-      <div className="flex-1 flex flex-col">
-        {/* Navbar */}
-        <div className="sticky top-0 z-50 bg-[#fffaf7]">
-          <Navbar />
+    {/* Right section */}
+    <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      {/* Navbar - stays sticky on top */}
+      <div className="sticky top-0 z-50 bg-[#fffaf7] shadow-sm">
+        <Navbar />
         </div>
 
         <div className="px-6 sm:px-8 md:px-10 lg:px-12 xl:px-14 2xl:px-16 py-6 space-y-8 w-full overflow-y-auto">

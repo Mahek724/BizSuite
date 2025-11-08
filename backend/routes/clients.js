@@ -2,6 +2,8 @@ import express from "express";
 import Client from "../models/Client.js";
 import { authenticate, requireAdmin } from "../middleware/auth.js";
 import User from "../models/User.js";
+import { sendNotification } from "../utils/sendNotification.js";
+
 
 const router = express.Router();
 
@@ -56,6 +58,17 @@ router.post("/", authenticate, requireAdmin, async (req, res) => {
       assignedTo,
       createdBy: req.user._id,
     });
+
+    // after client created successfully
+await sendNotification({
+  sender: req.user._id,
+  receiver: assignedTo,
+  type: "ClientAssigned",
+  message: `A new client "${client.name}" has been assigned to you.`,
+  relatedId: client._id,
+  onModel: "Client",
+});
+
     res.status(201).json({ client });
   } catch (err) {
     res.status(500).json({ message: "Error creating client" });

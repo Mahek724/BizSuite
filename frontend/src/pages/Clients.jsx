@@ -195,17 +195,19 @@ useEffect(() => {
 ];
 
   return (
-    
-      <div className="flex min-h-screen bg-gray-50 w-screen">
-      <div className="sticky top-0 h-screen mr">
-        <Sidebar />
+  <div className="flex min-h-screen bg-gray-50 w-screen">
+    {/* Sidebar */}
+    <Sidebar />
+
+    {/* Main Content Area */}
+    <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      {/* Navbar */}
+      <div className="sticky top-0 z-50 bg-white shadow-md">
+        <Navbar />
       </div>
 
-      <div className="flex-1">
-      <Navbar />
-
-
-        <div className="p-6">
+      {/* Page Content */}
+      <div className="flex-1 overflow-y-auto p-6">
 
   {/* Header Section */}
   <motion.div

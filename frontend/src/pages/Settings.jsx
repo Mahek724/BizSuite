@@ -32,12 +32,21 @@ const API_BASE = api.defaults.baseURL + "/users";
 
 const mapServerUserToClient = (u) => {
   const fullName = u.fullName || u.name || "";
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
+  // handle relative vs absolute URL
+  let avatarUrl = u.avatarUrl || u.profilePhoto || u.avatar || null;
+  if (avatarUrl && !avatarUrl.startsWith("http")) {
+    avatarUrl = `${API_BASE}${avatarUrl.startsWith("/") ? "" : "/"}${avatarUrl}`;
+  }
+
   return {
     id: u._id || u.id,
     name: fullName,
     email: u.email,
     role: u.role || "Staff",
     status: u.status || "Active",
+    avatarUrl,
     initials: fullName ? fullName.charAt(0).toUpperCase() : "?",
     color: "#C98A8A",
     joinDate: u.createdAt
@@ -50,6 +59,8 @@ const mapServerUserToClient = (u) => {
     workSummary: u.workSummary || { leads: 0, tasks: 0, clients: 0 },
   };
 };
+
+
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token"); // adjust key if you store token elsewhere
@@ -495,12 +506,21 @@ const Settings = () => {
                       {/* User */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold text-sm shadow-sm"
-                            style={{ backgroundColor: user.color }}
-                          >
-                            {user.initials}
-                          </div>
+                          {user.avatarUrl ? (
+  <img
+    src={user.avatarUrl}
+    alt={user.name}
+    className="w-10 h-10 rounded-full object-cover shadow-sm border border-rose-200"
+  />
+) : (
+  <div
+    className="w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold text-sm shadow-sm"
+    style={{ backgroundColor: user.color }}
+  >
+    {user.initials}
+  </div>
+)}
+
                           <div>
                             <span className="text-base font-semibold text-gray-800 leading-tight">
                               {user.name}
@@ -628,12 +648,21 @@ const Settings = () => {
                 <div className="p-6 space-y-5">
                   {/* Avatar */}
                   <div className="flex flex-col items-center text-center space-y-2">
-                    <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-md"
-                      style={{ backgroundColor: selectedUser.color }}
-                    >
-                      {selectedUser.initials}
-                    </div>
+                   {selectedUser.avatarUrl ? (
+  <img
+    src={selectedUser.avatarUrl}
+    alt={selectedUser.name}
+    className="w-20 h-20 rounded-full object-cover shadow-md border-2 border-rose-200"
+  />
+) : (
+  <div
+    className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-md"
+    style={{ backgroundColor: selectedUser.color }}
+  >
+    {selectedUser.initials}
+  </div>
+)}
+
                     <h3 className="text-xl font-bold text-gray-900">{selectedUser.name}</h3>
                     <p className="text-sm text-gray-500">{selectedUser.email}</p>
                   </div>
