@@ -95,7 +95,7 @@ const Leads = () => {
           return;
         }
 
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE}/api/auth/staff`, {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/staff`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

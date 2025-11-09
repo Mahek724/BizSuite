@@ -22,7 +22,7 @@ function AuthPage() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
-      fetch(`${import.meta.env.VITE_API_BASE}/api/auth/me`, {
+      fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
@@ -263,7 +263,7 @@ function AuthPage() {
 
                 {/* Redirect fallback */}
                 <a
-  href={`${import.meta.env.VITE_API_BASE}/api/auth/google`}
+  href={`${import.meta.env.VITE_API_URL}/api/auth/google`}
   className="google-btn d-flex align-items-center justify-content-center gap-2 mt-2"
 >
   <img
