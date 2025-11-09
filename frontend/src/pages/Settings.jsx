@@ -24,7 +24,7 @@ import {
 } from "react-icons/fa";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE + "/api",
+  baseURL: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '')}/api`,
 });
 
 const API_BASE = api.defaults.baseURL + "/users";
@@ -32,12 +32,11 @@ const API_BASE = api.defaults.baseURL + "/users";
 
 const mapServerUserToClient = (u) => {
   const fullName = u.fullName || u.name || "";
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
   // handle relative vs absolute URL
   let avatarUrl = u.avatarUrl || u.profilePhoto || u.avatar || null;
   if (avatarUrl && !avatarUrl.startsWith("http")) {
-    avatarUrl = `${API_BASE}${avatarUrl.startsWith("/") ? "" : "/"}${avatarUrl}`;
+    avatarUrl = `${import.meta.env.VITE_API_URL}${avatarUrl.startsWith("/") ? "" : "/"}${avatarUrl}`;
   }
 
   return {

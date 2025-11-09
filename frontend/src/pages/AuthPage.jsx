@@ -5,7 +5,7 @@ import "../assets/css/auth.css";
 import { useNavigate, Link } from "react-router-dom";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE + "/api",
+  baseURL: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '')}/api`,
 });
 
 function AuthPage() {

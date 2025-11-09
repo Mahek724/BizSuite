@@ -14,17 +14,29 @@ import leadRoutes from "./routes/leadRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
-import userRoutes from "./routes/userRoutes.js"; 
+import userRoutes from "./routes/userRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 
 const app = express();
 
-// ✅ Apply CORS first
+// ✅ Dynamic CORS setup
+const allowedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow mobile/postman
+      if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      console.warn("❌ Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -57,20 +69,23 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/profile", profileRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+// ✅ Health check (for Render)
+app.get("/_health", (_req, res) => res.json({ ok: true }));
 
 // ✅ Start Server
 const start = async () => {
   try {
     await connectDB(process.env.MONGO_URI);
     console.log(chalk.green("✅ MongoDB Connected"));
-    app.listen(process.env.PORT || 5000, () =>
-      console.log(chalk.cyan(`🚀 Server running on port ${process.env.PORT || 5000}`))
+    const port = process.env.PORT || 5000;
+    app.listen(port, () =>
+      console.log(chalk.cyan(`🚀 Server running on port ${port}`))
     );
   } catch (err) {
     console.error(chalk.red("❌ Error connecting to MongoDB"), err.message);
     process.exit(1);
   }
 };
-start();
 
+start();
 export default app;
