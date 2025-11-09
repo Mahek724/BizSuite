@@ -230,7 +230,7 @@ const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(
 
 
   return (
-    <div className="flex min-h-screen bg-gray-50 overflow-hidden">
+    <div className="flex min-h-screen bg-gray-50 overflow-hidden w-screen">
       <Sidebar />
 
       <div className="flex-1 overflow-hidden">

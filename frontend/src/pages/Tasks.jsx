@@ -67,8 +67,17 @@ const api = axios.create({
     return "";
   };
 
-
-
+  // Date formatting helper: returns a localized date/time string or null if invalid
+  const formatDate = (dateValue) => {
+    if (!dateValue) return null;
+    try {
+      const d = new Date(dateValue);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toLocaleString(); // you can change options or toLocaleDateString/toLocaleTimeString if desired
+    } catch {
+      return null;
+    }
+  };
 
 useEffect(() => {
   const fetchStaff = async () => {
@@ -302,21 +311,28 @@ useEffect(() => {
     staff: false,
   });
 
-  return (
-    <div className="flex min-h-screen bg-gray-50 w-screen">
-      <Sidebar />
+   return (
+  <div className="flex min-h-screen bg-gray-50 w-screen">
+    {/* Sidebar */}
+    <Sidebar />
 
-      <div className="flex-1">
+    {/* Main Content Area */}
+    <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      {/* Navbar */}
+      <div className="sticky top-0 z-50 bg-white shadow-md">
         <Navbar />
+      </div>
 
-        <div className="p-6">
-          {/* Header Section */}
-          <motion.div
-            className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+      {/* Page Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+
+  {/* Header Section */}
+  <motion.div
+    className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
+    initial={{ opacity: 0, y: -20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+  >
             <div className="mb-4 lg:mb-0">
               <h1
                 className="text-xl font-semibold tracking-wide"
@@ -980,6 +996,8 @@ useEffect(() => {
                   { label: "Title", value: selectedTask.title, icon: <FaTasks className="text-rose-400" /> },
                   { label: "Description", value: selectedTask.description, icon: <FaAlignLeft className="text-rose-400" /> },
                   { label: "Due Date", value: selectedTask.dueDate, icon: <FaCalendar className="text-rose-400" /> },
+                  // Created At added here (formatted)
+                  { label: "Created At", value: formatDate(selectedTask.createdAt), icon: <FaCalendar className="text-rose-400" /> },
                   { label: "Priority", value: selectedTask.priority, icon: <FaExclamationCircle className="text-rose-400" /> },
                   { label: "Status", value: selectedTask.status, icon: <FaInfoCircle className="text-rose-400" /> },
                   { label: "Assigned To", value: selectedTask.assignedTo, icon: <FaUserTie className="text-rose-400" /> },

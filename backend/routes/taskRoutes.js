@@ -30,26 +30,35 @@ router.get("/:id", async (req, res) => {
 });
 
 // ✅ Create a new task
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     const newTask = await Task.create(req.body);
-    // inside POST route
-if (req.body.assignedTo) {
-  const staff = await User.findOne({ fullName: req.body.assignedTo });
-  if (staff) {
-    await sendNotification({
-      sender: req.user._id,
-      receiver: staff._id,
-      type: "TaskAssigned",
-      message: `A new task "${newTask.title}" has been assigned to you.`,
-      relatedId: newTask._id,
-      onModel: "Task",
-    });
-  }
-}
+
+    // notify assigned staff if present
+    if (req.body.assignedTo) {
+      try {
+        const staff = await User.findOne({ fullName: req.body.assignedTo });
+        if (staff) {
+          // sendNotification expects sender + receiver(s) — keeping the single-receiver shape used previously
+          await sendNotification({
+            sender: req.user._id,
+            receiver: staff._id,
+            type: "TaskAssigned",
+            message: `A new task "${newTask.title}" has been assigned to you.`,
+            relatedId: newTask._id,
+            onModel: "Task",
+          });
+        }
+      } catch (notifyErr) {
+        // log notification error but don't fail the whole request
+        console.error("Error sending assignment notification:", notifyErr);
+      }
+    }
+
     res.status(201).json(newTask);
   } catch (error) {
-    res.status(400).json({ message: "Error creating task", error });
+    console.error("POST /tasks error:", error);
+    res.status(400).json({ message: "Error creating task", error: error.message });
   }
 });
 

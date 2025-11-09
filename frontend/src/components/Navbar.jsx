@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
-import { FaRegBell } from "react-icons/fa";
+import { FaRegBell, FaTimes } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import Profile from "./Profile";
@@ -58,9 +58,13 @@ const Navbar = () => {
       notifications
         .filter((n) => !n.isRead)
         .map((n) =>
-          axios.put(`${API_BASE}/api/notifications/${n._id}/read`, {}, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
+          axios.put(
+            `${API_BASE}/api/notifications/${n._id}/read`,
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
         )
     );
     fetchNotifications();
@@ -129,14 +133,26 @@ const Navbar = () => {
               <div className="absolute right-0 mt-3 w-80 bg-white border rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                 <div className="p-3 font-semibold border-b flex justify-between items-center">
                   <span>Notifications</span>
-                  {notifications.length > 0 && (
+
+                  <div className="flex items-center gap-2">
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearAll}
+                        className="text-xs text-red-500 hover:underline"
+                        aria-label="Clear notifications"
+                      >
+                        Clear
+                      </button>
+                    )}
+
                     <button
-                      onClick={clearAll}
-                      className="text-xs text-red-500 hover:underline"
+                      onClick={() => setOpenNotif(false)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600"
+                      aria-label="Close notifications"
                     >
-                      Clear
+                      <FaTimes size={12} />
                     </button>
-                  )}
+                  </div>
                 </div>
 
                 {notifications.length === 0 ? (
