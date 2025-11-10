@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
   "dev": "nodemon server.js",
-  "start": "node server.js"
+  "start": "node server.js",
+  "test": "echo Use test:backend",
+  "test:backend": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit"
 },
   "keywords": [],
   "author": "",
