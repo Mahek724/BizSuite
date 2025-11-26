@@ -8,6 +8,7 @@ import {
   FaPlus,
   FaTimes,
   FaEye,
+  FaFileCsv,
   FaEdit,
   FaTrash,
   FaFilter,
@@ -27,9 +28,8 @@ const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '')}/api`,
 });
 
-
 const Clients = () => {
-   const { user } = useAuth();
+  const { user } = useAuth();
   const [clients, setClients] = useState([]);
   const [staffList, setStaffList] = useState([]); 
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -44,8 +44,6 @@ const Clients = () => {
   const [viewMode, setViewMode] = useState("kanban");
   const [isAssignDropdownOpen, setIsAssignDropdownOpen] = useState(false);
 
-
-
   const validateForm = () => {
     if (!selectedClient.name.trim()) return "Name is required";
     if (!selectedClient.email.trim()) return "Email is required";
@@ -58,7 +56,7 @@ const Clients = () => {
     return "";
   };
 
-useEffect(() => {
+  useEffect(() => {
     if (isAddFormOpen || isEditFormOpen) {
       api.get("/auth/staff", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -77,7 +75,6 @@ useEffect(() => {
       .catch(() => setClients([]));
   }, []);
 
-
   const handleAddClient = () => {
     setIsAddFormOpen(true);
     setSelectedClient({
@@ -92,81 +89,78 @@ useEffect(() => {
   };
 
   const handleSaveClient = async (e) => {
-  e.preventDefault();
-  const validation = validateForm();
-  if (validation) {
-    setError(validation);
-    return;
-  }
-  try {
-    if (selectedClient._id) { // Edit mode
-      await api.put(`/clients/${selectedClient._id}`, selectedClient, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setIsEditFormOpen(false);
-    } else { // Add mode
-      await api.post("/clients", selectedClient, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setIsAddFormOpen(false);
+    e.preventDefault();
+    const validation = validateForm();
+    if (validation) {
+      setError(validation);
+      return;
     }
-    // Reload clients after save
-    const res = await api.get("/clients", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    setClients(res.data.clients);
-    setSelectedClient(null);
-    setError("");
-  } catch (err) {
-    setError("Failed to save client.");
-  }
-};
-
+    try {
+      if (selectedClient._id) { // Edit mode
+        await api.put(`/clients/${selectedClient._id}`, selectedClient, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        setIsEditFormOpen(false);
+      } else { // Add mode
+        await api.post("/clients", selectedClient, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        setIsAddFormOpen(false);
+      }
+      // Reload clients after save
+      const res = await api.get("/clients", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      setClients(res.data.clients);
+      setSelectedClient(null);
+      setError("");
+    } catch (err) {
+      setError("Failed to save client.");
+    }
+  };
 
   const handleEditClient = (client) => {
-  setSelectedClient({
-    ...client,
-    assignedTo: typeof client.assignedTo === "object" 
-      ? client.assignedTo._id 
-      : client.assignedTo,
-  });
-  setIsEditFormOpen(true);
-  setError("");
-};
-
+    setSelectedClient({
+      ...client,
+      assignedTo: typeof client.assignedTo === "object" 
+        ? client.assignedTo._id 
+        : client.assignedTo,
+    });
+    setIsEditFormOpen(true);
+    setError("");
+  };
 
   const handleViewDetails = (client) => {
-  const assignedUser =
-    typeof client.assignedTo === "object"
-      ? client.assignedTo
-      : staffList.find((s) => s._id === client.assignedTo);
+    const assignedUser =
+      typeof client.assignedTo === "object"
+        ? client.assignedTo
+        : staffList.find((s) => s._id === client.assignedTo);
 
-  setSelectedClient({
-    ...client,
-    assignedTo: assignedUser || { fullName: "Unassigned" },
-  });
-  setIsDetailsOpen(true);
-};
-
+    setSelectedClient({
+      ...client,
+      assignedTo: assignedUser || { fullName: "Unassigned" },
+    });
+    setIsDetailsOpen(true);
+  };
 
   const handleDeleteConfirm = (client) => {
     setDeleteConfirm(client);
   };
 
   const handleDelete = async () => {
-  try {
-    await api.delete(`/clients/${deleteConfirm._id}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    const res = await api.get("/clients", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    setClients(res.data.clients);
-    setDeleteConfirm(null);
-  } catch (err) {
-    setError("Failed to delete client.");
-  }
-};
+    try {
+      await api.delete(`/clients/${deleteConfirm._id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      const res = await api.get("/clients", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      setClients(res.data.clients);
+      setDeleteConfirm(null);
+    } catch (err) {
+      setError("Failed to delete client.");
+    }
+  };
 
   const closeModal = () => {
     setIsAddFormOpen(false);
@@ -183,388 +177,444 @@ useEffect(() => {
       client.company.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesTag =
-      filterTag === "All Tags" || client.tags.includes(filterTag);
+      filterTag === "All Tags" || (client.tags || []).includes(filterTag);
 
     return matchesSearch && matchesTag;
   });
 
   const allTags = [
-  "All Tags",
-  ...Array.from(
-    new Set(clients.flatMap(c => c.tags || []))
-  ),
-];
+    "All Tags",
+    ...Array.from(
+      new Set(clients.flatMap(c => c.tags || []))
+    ),
+  ];
+
+  // -----------------------
+  // CSV Export helpers
+  // -----------------------
+  const convertToCSV = (objArray) => {
+    const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray);
+    if (array.length === 0) return "";
+    const keys = Object.keys(array[0]);
+    const header = keys.join(",");
+    const rows = array.map(row =>
+      keys
+        .map(k => {
+          const cell = row[k] ?? "";
+          // Escape double quotes and wrap in quotes
+          return `"${String(cell).replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+    return [header, ...rows].join("\r\n");
+  };
+
+  const handleExportCSV = () => {
+    if (!clients || clients.length === 0) {
+      setError("No clients available to export.");
+      return;
+    }
+
+    const data = clients.map(c => {
+      const assigned =
+        typeof c.assignedTo === "object"
+          ? c.assignedTo.fullName
+          : staffList.find(s => s._id === c.assignedTo)?.fullName || "";
+
+      return {
+        Name: c.name || "",
+        Email: c.email || "",
+        Phone: c.phone || "",
+        Company: c.company || "",
+        AssignedTo: assigned,
+        Tags: (c.tags || []).join("; "),
+        CreatedAt: c.createdAt ? new Date(c.createdAt).toISOString() : "",
+      };
+    });
+
+    const csv = convertToCSV(data);
+    // prepend BOM for Excel compatibility
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `clients_export_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-  <div className="flex min-h-screen bg-gray-50 w-screen">
-    {/* Sidebar */}
-    <Sidebar />
+    <div className="flex min-h-screen bg-gray-50 w-screen">
+      {/* Sidebar */}
+      <Sidebar />
 
-    {/* Main Content Area */}
-    <div className="flex-1 flex flex-col h-screen overflow-hidden">
-      {/* Navbar */}
-      <div className="sticky top-0 z-50 bg-white shadow-md">
-        <Navbar />
-      </div>
-
-      {/* Page Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-
-  {/* Header Section */}
-  <motion.div
-    className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div className="mb-4 lg:mb-0">
- <h1
-  className="text-xl font-semibold tracking-wide"
-  style={{
-    color: "#B5828C",
-    fontFamily: "'Raleway', sans-serif",
-  }}
->
-  Manage and track your client relationships
-</h1>
-
-</div>
-
-   {user?.role !== "staff" && (
-  <button
-    className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-    onClick={handleAddClient}
-  >
-    <FaPlus className="w-4 h-4" />
-    Add Client
-  </button>
-)}
-  </motion.div>
-
-          {/* Filters Section */}
-<motion.div
-  className="bg-white rounded-xl p-4 md:p-5 shadow-sm mb-6 border border-gray-100 w-full"
-
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ delay: 0.2 }}
->
-  {/* Stylish Title */}
-  <div className="flex items-center gap-2 mb-4">
-    <FaFilter className="text-[#E50046] w-5 h-5" />
-    <h2
-      className="text-lg font-bold"
-      style={{
-        fontFamily: "'Raleway', sans-serif",
-        color: "#E50046",
-      }}
-    >
-      Search & Filter Clients
-    </h2>
-  </div>
-
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-    {/* Search Field */}
-    <input
-      type="text"
-      placeholder="Search by name, email, or company..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="col-span-2 w-full border-2 border-[#FDAB9E] rounded-xl px-4 py-2 text-sm font-medium focus:border-[#E50046] focus:outline-none focus:ring-2 focus:ring-[#FFF0BD] transition-all shadow-sm"
-      style={{ fontFamily: "'Raleway', sans-serif" }}
-    />
-
-    {/* Stylish Custom Dropdown */}
-    <div className="relative">
-      {/* Dropdown Header */}
-      <div
-        className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-      >
-        <span className="text-sm font-medium">{filterTag}</span>
-        <FaChevronDown className="ml-2 text-[#E50046]" />
-      </div>
-
-      {/* Dropdown Menu */}
-      {isDropdownOpen && (
-        <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-sm">
-          {allTags.map((tag) => (
-            <div
-              key={tag}
-              className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
-              onClick={() => {
-                setFilterTag(tag);
-                setIsDropdownOpen(false);
-              }}
-            >
-              {tag}
-            </div>
-          ))}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Navbar */}
+        <div className="sticky top-0 z-50 bg-white shadow-md">
+          <Navbar />
         </div>
-      )}
-    </div>
-  </div>
-</motion.div>
 
-{/* View Toggle Buttons */}
-<div className="flex justify-end items-center mb-4 gap-3">
-  <button
-    onClick={() => setViewMode("kanban")}
-    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ${
-      viewMode === "kanban"
-        ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white"
-        : "bg-white border border-gray-200 text-gray-700 hover:bg-rose-50"
-    }`}
-  >
-    <FaEye /> Kanban View
-  </button>
+        {/* Page Content */}
+        <div className="flex-1 overflow-y-auto p-6">
 
-  <button
-    onClick={() => setViewMode("list")}
-    className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ${
-      viewMode === "list"
-        ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white"
-        : "bg-white border border-gray-200 text-gray-700 hover:bg-rose-50"
-    }`}
-  >
-    <FaEdit /> List View
-  </button>
-</div>
-
-{/* Clients Section */}
-<div className="w-full px-4 md:px-6 lg:px-8">
-  <AnimatePresence mode="wait">
-  {viewMode === "kanban" ? (
-    // 🌸 Modern Kanban View
-    <motion.div
-      key="kanban"
-      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mt-4"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-    >
-      {filteredClients.length > 0 ? (
-        filteredClients.map((client, index) => (
+          {/* Header Section */}
           <motion.div
-            key={client.id}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl border border-rose-100 p-4 flex flex-col justify-between shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ delay: index * 0.07 }}
+            className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            {/* Avatar + Name */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-500 text-white font-bold flex items-center justify-center shadow-sm">
-                {client.name.charAt(0)}
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800 text-sm">{client.name}</h3>
-                <p className="text-xs text-gray-500">{client.company}</p>
-              </div>
-            </div>
-
-            {/* Details */}
-            <div className="space-y-1 mb-3 text-xs text-gray-600">
-              <div className="flex items-center gap-2">
-                <FaEnvelope className="text-rose-400 w-3" /> {client.email}
-              </div>
-              <div className="flex items-center gap-2">
-                <FaPhoneAlt className="text-rose-400 w-3" /> {client.phone}
-              </div>
-              <div className="flex items-center gap-2">
-                <FaUserTie className="text-rose-400 w-3" /> 
-                {typeof client.assignedTo === "object"
-  ? client.assignedTo?.fullName
-  : staffList.find((s) => s._id === client.assignedTo)?.fullName || "Unassigned"}
-
-
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1 mb-3">
-              {client.tags.map((tag, i) => (
-                <span
-                  key={i}
-                  className="px-2 py-0.5 bg-rose-50 text-rose-600 text-xs font-medium rounded-full"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            {/* Actions */}
-            <div
-  className={`flex border-t border-gray-100 pt-3 ${
-    user?.role === "staff" ? "justify-center" : "justify-between"
-  }`}
->
-  <button
-    onClick={() => handleViewDetails(client)}
-    className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
-  >
-    <FaEye />
-  </button>
-
-  {user?.role !== "staff" && (
-    <>
-      <button
-        onClick={() => handleEditClient(client)}
-        className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
-      >
-        <FaEdit />
-      </button>
-      <button
-        onClick={() => handleDeleteConfirm(client)}
-        className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-      >
-        <FaTrash />
-      </button>
-    </>
-  )}
-</div>
-
-
-          </motion.div>
-        ))
-      ) : (
-        <motion.div
-          key="empty-kanban"
-          className="col-span-full flex flex-col items-center justify-center p-12 bg-white/80 border border-rose-100 rounded-2xl text-gray-500"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <FaUser className="w-10 h-10 mb-3 text-gray-400" />
-          <p>No clients found</p>
-        </motion.div>
-      )}
-    </motion.div>
-  ) : (
-    // 🌿 Modern List View
-    <motion.div
-      key="list"
-      className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-rose-100 overflow-x-auto mt-4"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-    >
-      {filteredClients.length > 0 ? (
-        <motion.table
-          className="w-full text-sm text-gray-700"
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: { opacity: 0 },
-            show: { opacity: 1, transition: { staggerChildren: 0.05 } },
-          }}
-        >
-          <thead className="bg-gradient-to-r from-rose-100 to-pink-50 text-rose-600">
-            <tr>
-              <th className="py-3 px-4 text-left">Name</th>
-              <th className="py-3 px-4 text-left">Contact</th>
-              <th className="py-3 px-4 text-left">Company</th>
-              <th className="py-3 px-4 text-left">Assigned</th>
-              <th className="py-3 px-4 text-left">Tags</th>
-              <th className="py-3 px-4 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredClients.map((client) => (
-              <motion.tr
-                key={client.id}
-                className="border-b border-gray-100 hover:bg-rose-50 transition-all"
-                variants={{
-                  hidden: { opacity: 0, y: 10 },
-                  show: { opacity: 1, y: 0 },
+            <div className="mb-4 lg:mb-0">
+              <h1
+                className="text-xl font-semibold tracking-wide"
+                style={{
+                  color: "#B5828C",
+                  fontFamily: "'Raleway', sans-serif",
                 }}
               >
-                <td className="py-3 px-4 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                    {client.name.charAt(0)}
-                  </div>
-                  <span className="font-medium text-gray-800">{client.name}</span>
-                </td>
-                <td className="py-3 px-4">
-                  <div className="text-xs flex items-center gap-2 text-gray-600">
-                    <FaEnvelope className="text-rose-400" /> {client.email}
-                  </div>
-                  <div className="text-xs flex items-center gap-2 text-gray-600">
-                    <FaPhoneAlt className="text-rose-400" /> {client.phone}
-                  </div>
-                </td>
-                <td className="py-3 px-4 text-gray-800">{client.company}</td>
-                <td className="py-3 px-4 whitespace-nowrap">
-  <div className="flex items-center gap-2">
-    <span className="font-medium text-gray-800 text-sm truncate max-w-[160px]">
-    {typeof client.assignedTo === "object"
-  ? client.assignedTo?.fullName
-  : staffList.find((s) => s._id === client.assignedTo)?.fullName || "Unassigned"}
+                Manage and track your client relationships
+              </h1>
+            </div>
 
+            <div className="flex items-center gap-3">
+<button
+  onClick={handleExportCSV}
+  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 
+             px-4 py-2.5 rounded-lg font-medium shadow-sm 
+             hover:bg-rose-900 hover:border-rose-300 hover:shadow-md hover:scale-[1.02] 
+             transition-all duration-200"
+>
+  {/* Optional icon */}
+  <FaFileCsv className="w-4 h-4" />
+  <span>Export CSV</span>
+</button>
 
-    </span>
-  </div>
-</td>
+              
 
+              {user?.role !== "staff" && (
+                <button
+                  className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+                  onClick={handleAddClient}
+                >
+                  <FaPlus className="w-4 h-4" />
+                  Add Client
+                </button>
+              )}
+            </div>
+          </motion.div>
 
-                <td className="py-3 px-4">
-                  <div className="flex flex-wrap gap-1">
-                    {client.tags.map((tag, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 bg-rose-50 text-rose-600 text-xs rounded-full"
+          {/* Filters Section */}
+          <motion.div
+            className="bg-white rounded-xl p-4 md:p-5 shadow-sm mb-6 border border-gray-100 w-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {/* Stylish Title */}
+            <div className="flex items-center gap-2 mb-4">
+              <FaFilter className="text-[#E50046] w-5 h-5" />
+              <h2
+                className="text-lg font-bold"
+                style={{
+                  fontFamily: "'Raleway', sans-serif",
+                  color: "#E50046",
+                }}
+              >
+                Search & Filter Clients
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Search Field */}
+              <input
+                type="text"
+                placeholder="Search by name, email, or company..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="col-span-2 w-full border-2 border-[#FDAB9E] rounded-xl px-4 py-2 text-sm font-medium focus:border-[#E50046] focus:outline-none focus:ring-2 focus:ring-[#FFF0BD] transition-all shadow-sm"
+                style={{ fontFamily: "'Raleway', sans-serif" }}
+              />
+
+              {/* Stylish Custom Dropdown */}
+              <div className="relative">
+                {/* Dropdown Header */}
+                <div
+                  className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 cursor-pointer bg-[#FFF0BD] text-[#E50046] shadow-sm"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  <span className="text-sm font-medium">{filterTag}</span>
+                  <FaChevronDown className="ml-2 text-[#E50046]" />
+                </div>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute z-10 w-full mt-2 bg-white border border-[#FDAB9E] rounded-xl shadow-sm">
+                    {allTags.map((tag) => (
+                      <div
+                        key={tag}
+                        className="px-4 py-2 text-sm text-[#E50046] hover:bg-[#FDAB9E] hover:text-white rounded-lg cursor-pointer transition-all"
+                        onClick={() => {
+                          setFilterTag(tag);
+                          setIsDropdownOpen(false);
+                        }}
                       >
                         {tag}
-                      </span>
+                      </div>
                     ))}
                   </div>
-                </td>
-                <td className="py-3 px-4 text-center">
-  <div className="flex justify-center gap-2">
-    <button
-      className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
-      onClick={() => handleViewDetails(client)}
-    >
-      <FaEye />
-    </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
 
-    {user?.role !== "staff" && (
-      <>
-        <button
-          className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
-          onClick={() => handleEditClient(client)}
-        >
-          <FaEdit />
-        </button>
-        <button
-          className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-          onClick={() => handleDeleteConfirm(client)}
-        >
-          <FaTrash />
-        </button>
-      </>
-    )}
-  </div>
-</td>
+          {/* View Toggle Buttons */}
+          <div className="flex justify-end items-center mb-4 gap-3">
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ${
+                viewMode === "kanban"
+                  ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white"
+                  : "bg-white border border-gray-200 text-gray-700 hover:bg-rose-50"
+              }`}
+            >
+              <FaEye /> Kanban View
+            </button>
 
-              </motion.tr>
-            ))}
-          </tbody>
-        </motion.table>
-      ) : (
-        <div className="p-12 text-center text-gray-500">No clients found</div>
-      )}
-    </motion.div>
-  )}
-</AnimatePresence>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-300 shadow-sm ${
+                viewMode === "list"
+                  ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white"
+                  : "bg-white border border-gray-200 text-gray-700 hover:bg-rose-50"
+              }`}
+            >
+              <FaEdit /> List View
+            </button>
+          </div>
 
+          {/* Clients Section */}
+          <div className="w-full px-4 md:px-6 lg:px-8">
+            <AnimatePresence mode="wait">
+              {viewMode === "kanban" ? (
+                // 🌸 Modern Kanban View
+                <motion.div
+                  key="kanban"
+                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mt-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                >
+                  {filteredClients.length > 0 ? (
+                    filteredClients.map((client, index) => (
+                      <motion.div
+                        key={client.id || client._id}
+                        className="bg-white/80 backdrop-blur-sm rounded-2xl border border-rose-100 p-4 flex flex-col justify-between shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ delay: index * 0.07 }}
+                      >
+                        {/* Avatar + Name */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-500 text-white font-bold flex items-center justify-center shadow-sm">
+                            {client.name?.charAt(0) ?? "U"}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-800 text-sm">{client.name}</h3>
+                            <p className="text-xs text-gray-500">{client.company}</p>
+                          </div>
+                        </div>
 
+                        {/* Details */}
+                        <div className="space-y-1 mb-3 text-xs text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <FaEnvelope className="text-rose-400 w-3" /> {client.email}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <FaPhoneAlt className="text-rose-400 w-3" /> {client.phone}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <FaUserTie className="text-rose-400 w-3" /> 
+                            {typeof client.assignedTo === "object"
+                              ? client.assignedTo?.fullName
+                              : staffList.find((s) => s._id === client.assignedTo)?.fullName || "Unassigned"}
+                          </div>
+                        </div>
 
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {(client.tags || []).map((tag, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 bg-rose-50 text-rose-600 text-xs font-medium rounded-full"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
 
-  
-</div>
+                        {/* Actions */}
+                        <div
+                          className={`flex border-t border-gray-100 pt-3 ${
+                            user?.role === "staff" ? "justify-center" : "justify-between"
+                          }`}
+                        >
+                          <button
+                            onClick={() => handleViewDetails(client)}
+                            className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
+                          >
+                            <FaEye />
+                          </button>
+
+                          {user?.role !== "staff" && (
+                            <>
+                              <button
+                                onClick={() => handleEditClient(client)}
+                                className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
+                              >
+                                <FaEdit />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteConfirm(client)}
+                                className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                              >
+                                <FaTrash />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <motion.div
+                      key="empty-kanban"
+                      className="col-span-full flex flex-col items-center justify-center p-12 bg-white/80 border border-rose-100 rounded-2xl text-gray-500"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <FaUser className="w-10 h-10 mb-3 text-gray-400" />
+                      <p>No clients found</p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ) : (
+                // 🌿 Modern List View
+                <motion.div
+                  key="list"
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-rose-100 overflow-x-auto mt-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                >
+                  {filteredClients.length > 0 ? (
+                    <motion.table
+                      className="w-full text-sm text-gray-700"
+                      initial="hidden"
+                      animate="show"
+                      variants={{
+                        hidden: { opacity: 0 },
+                        show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+                      }}
+                    >
+                      <thead className="bg-gradient-to-r from-rose-100 to-pink-50 text-rose-600">
+                        <tr>
+                          <th className="py-3 px-4 text-left">Name</th>
+                          <th className="py-3 px-4 text-left">Contact</th>
+                          <th className="py-3 px-4 text-left">Company</th>
+                          <th className="py-3 px-4 text-left">Assigned</th>
+                          <th className="py-3 px-4 text-left">Tags</th>
+                          <th className="py-3 px-4 text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredClients.map((client) => (
+                          <motion.tr
+                            key={client.id || client._id}
+                            className="border-b border-gray-100 hover:bg-rose-50 transition-all"
+                            variants={{
+                              hidden: { opacity: 0, y: 10 },
+                              show: { opacity: 1, y: 0 },
+                            }}
+                          >
+                            <td className="py-3 px-4 flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                {client.name?.charAt(0) ?? "U"}
+                              </div>
+                              <span className="font-medium text-gray-800">{client.name}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="text-xs flex items-center gap-2 text-gray-600">
+                                <FaEnvelope className="text-rose-400" /> {client.email}
+                              </div>
+                              <div className="text-xs flex items-center gap-2 text-gray-600">
+                                <FaPhoneAlt className="text-rose-400" /> {client.phone}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-gray-800">{client.company}</td>
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-800 text-sm truncate max-w-[160px]">
+                                  {typeof client.assignedTo === "object"
+                                    ? client.assignedTo?.fullName
+                                    : staffList.find((s) => s._id === client.assignedTo)?.fullName || "Unassigned"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex flex-wrap gap-1">
+                                {(client.tags || []).map((tag, i) => (
+                                  <span
+                                    key={i}
+                                    className="px-2 py-0.5 bg-rose-50 text-rose-600 text-xs rounded-full"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <div className="flex justify-center gap-2">
+                                <button
+                                  className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-600 rounded-lg transition-all"
+                                  onClick={() => handleViewDetails(client)}
+                                >
+                                  <FaEye />
+                                </button>
+
+                                {user?.role !== "staff" && (
+                                  <>
+                                    <button
+                                      className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all"
+                                      onClick={() => handleEditClient(client)}
+                                    >
+                                      <FaEdit />
+                                    </button>
+                                    <button
+                                      className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                                      onClick={() => handleDeleteConfirm(client)}
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </motion.table>
+                  ) : (
+                    <div className="p-12 text-center text-gray-500">No clients found</div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
 
 

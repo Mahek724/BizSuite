@@ -19,6 +19,9 @@ import {
   CartesianGrid,
 } from "recharts";
 import { FaUsers, FaTasks, FaChartLine } from "react-icons/fa";
+import useAISummary from "../hooks/useAISummary";
+import AISummaryBox from "../components/AISummaryCard";
+
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '')}/api`,
@@ -47,6 +50,7 @@ const timeAgo = (iso) => {
   return d.toLocaleDateString();
 };
 
+
 const Dashboard = () => {
   // summary cards state
     const { user } = useAuth();
@@ -69,6 +73,9 @@ const Dashboard = () => {
   const [barData, setBarData] = useState([]);
   const [lineData, setLineData] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const { summary: aiSummary, loading: aiLoading, generateSummary, closeSummary } = useAISummary();
+
+
 
   // loading / error
   const [loading, setLoading] = useState(true);
@@ -97,6 +104,7 @@ const Dashboard = () => {
   api.get(`/dashboard/sales-trend`, { headers }),
   api.get(`/dashboard/recent-activity`, { headers }),
 ]);
+
 
 
         // SUMMARY
@@ -170,6 +178,7 @@ const Dashboard = () => {
     };
 
     fetchAll();
+
     return () => {
       mounted = false;
     };
@@ -246,6 +255,22 @@ const Dashboard = () => {
     { name: "Dec", value: 0 },
   ];
 
+
+  const handleGenerateAI = () => {
+  const payload = {
+    summaryData: summary,
+    leadsByStage: pieData,
+    leadsBySource: barData,
+    salesTrend: lineData,
+    recentActivity: recentActivity,
+  };
+
+  generateSummary(payload);
+};
+
+
+
+
   return (
   <div className="flex min-h-screen bg-[#fffaf7] text-[#4a2d2a] overflow-hidden">
     {/* Sidebar - stays sticky on the left */}
@@ -262,6 +287,15 @@ const Dashboard = () => {
 
         <div className="px-6 sm:px-8 md:px-10 lg:px-12 xl:px-14 2xl:px-16 py-6 space-y-8 w-full overflow-y-auto">
           <h2 className="text-lg font-medium">Welcome back! Here's your business overview.</h2>
+
+         <AISummaryBox
+  summary={aiSummary}
+  loading={aiLoading}
+  onGenerate={handleGenerateAI}
+  onClose={closeSummary}
+/>
+
+
 
           {error && (
             <div className="p-3 rounded-md bg-red-50 border border-red-100 text-red-600">

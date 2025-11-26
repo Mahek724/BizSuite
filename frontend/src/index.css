@@ -50,6 +50,18 @@
 .animate-bounce-slow {
   animation: bounce-slow 1.5s infinite ease-in-out;
 }
+.prose h1, .prose h2, .prose h3 {
+  color: #b44d3b !important;
+}
+
+.prose strong {
+  color: #7a3a33 !important;
+}
+
+.prose ul li::marker {
+  color: #e99685;
+}
+
 
   
 }

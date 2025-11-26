@@ -1,110 +1,20 @@
 import express from "express";
-import Task from "../models/Task.js";
-import { sendNotification } from "../utils/sendNotification.js";
-import User from "../models/User.js"; // if not already imported
-import { authenticate } from "../middleware/auth.js"; // ✅ make sure this exists
-
-
+import { authenticate } from "../middleware/auth.js";
+import {
+  getAllTasks,
+  getTaskById,
+  createTask,
+  updateTask,
+  deleteTask,
+} from "../controllers/taskController.js";
 
 const router = express.Router();
 
-// ✅ Get all tasks
-router.get("/", async (req, res) => {
-  try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
-    res.status(200).json(tasks);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch tasks", error });
-  }
-});
-
-// ✅ Get a single task by ID
-router.get("/:id", async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ message: "Task not found" });
-    res.status(200).json(task);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching task", error });
-  }
-});
-
-// ✅ Create a new task
-router.post("/", authenticate, async (req, res) => {
-  try {
-    const newTask = await Task.create(req.body);
-
-    // notify assigned staff if present
-    if (req.body.assignedTo) {
-      try {
-        const staff = await User.findOne({ fullName: req.body.assignedTo });
-        if (staff) {
-          // sendNotification expects sender + receiver(s) — keeping the single-receiver shape used previously
-          await sendNotification({
-            sender: req.user._id,
-            receiver: staff._id,
-            type: "TaskAssigned",
-            message: `A new task "${newTask.title}" has been assigned to you.`,
-            relatedId: newTask._id,
-            onModel: "Task",
-          });
-        }
-      } catch (notifyErr) {
-        // log notification error but don't fail the whole request
-        console.error("Error sending assignment notification:", notifyErr);
-      }
-    }
-
-    res.status(201).json(newTask);
-  } catch (error) {
-    console.error("POST /tasks error:", error);
-    res.status(400).json({ message: "Error creating task", error: error.message });
-  }
-});
-
-// ✅ Update a task
-router.put("/:id", authenticate, async (req, res) => {
-  try {
-    // 1️⃣ Update the task
-    const updatedTask = await Task.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-
-    if (!updatedTask) {
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    // 2️⃣ If a staff (not admin) changes status, notify all admins
-    if (req.body.status && req.user.role !== "Admin") {
-      const admins = await User.find({ role: "Admin" });
-      await sendNotification({
-        sender: req.user._id,
-        receivers: admins.map((a) => a._id),
-        type: "TaskStatusChanged",
-        message: `${req.user.fullName} updated task "${updatedTask.title}" to ${req.body.status}`,
-        relatedId: updatedTask._id,
-        onModel: "Task",
-      });
-    }
-
-    // 3️⃣ Respond to client
-    res.status(200).json(updatedTask);
-  } catch (error) {
-    console.error("Error updating task:", error);
-    res.status(400).json({ message: "Error updating task", error });
-  }
-});
-
-// ✅ Delete a task
-router.delete("/:id", async (req, res) => {
-  try {
-    const deletedTask = await Task.findByIdAndDelete(req.params.id);
-    if (!deletedTask)
-      return res.status(404).json({ message: "Task not found" });
-    res.status(200).json({ message: "Task deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting task", error });
-  }
-});
+// Routes
+router.get("/", getAllTasks);
+router.get("/:id", getTaskById);
+router.post("/", authenticate, createTask);
+router.put("/:id", authenticate, updateTask);
+router.delete("/:id", authenticate, deleteTask);
 
 export default router;

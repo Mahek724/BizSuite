@@ -22,7 +22,8 @@ import {
   FaEdit,
   FaTrash,
   FaCheckCircle,
-  FaRegCircle
+  FaRegCircle,
+  FaFileCsv,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -43,6 +44,7 @@ const api = axios.create({
   const [showAssignedDropdown, setShowAssignedDropdown] = useState(false);
   const [error, setError] = useState("");
   const [staffOptions, setStaffOptions] = useState(["All Staff"]);
+  const [exporting, setExporting] = useState(false);
 
 
   const [filters, setFilters] = useState({
@@ -101,7 +103,6 @@ useEffect(() => {
       );
 
       setStaffOptions(["All Staff", ...uniqueStaff]);
-      console.log("✅ Staff loaded:", uniqueStaff);
     } catch (err) {
       console.error("❌ Failed to fetch staff list:", err.response?.data || err.message);
     }
@@ -156,7 +157,6 @@ useEffect(() => {
       );
 
       setTasks(uniqueTasks);
-      console.log("✅ Tasks loaded:", uniqueTasks);
     } catch (err) {
       console.error("❌ Failed to fetch tasks:", err.response?.data || err.message);
     }
@@ -311,6 +311,78 @@ useEffect(() => {
     staff: false,
   });
 
+  // -----------------------
+  // CSV Export helpers
+  // -----------------------
+  const convertToCSV = (objArray) => {
+    const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray || "[]");
+    if (!array.length) return "";
+    const keys = Object.keys(array[0]);
+    const header = keys.join(",");
+    const rows = array.map(row =>
+      keys
+        .map(k => {
+          const cell = row[k] ?? "";
+          // Escape double quotes and wrap in quotes
+          return `"${String(cell).replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+    return [header, ...rows].join("\r\n");
+  };
+
+  /**
+   * Export currently listed tasks (filteredTasks) as CSV.
+   * Visible to Admin and Staff.
+   */
+  const handleExportTasks = async () => {
+    // allow admin or staff
+    const role = (user?.role || "").toLowerCase();
+    if (!(role === "admin" || role === "staff")) {
+      alert("Export allowed for Admin or Staff only.");
+      return;
+    }
+
+    if (!filteredTasks || filteredTasks.length === 0) {
+      alert("No tasks available to export.");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      // Map tasks to CSV-friendly shape
+      const csvData = filteredTasks.map((t) => ({
+        Title: t.title || "",
+        Description: t.description || "",
+        DueDate: formatDate(t.dueDate) || "",
+        Priority: t.priority || "",
+        Status: t.status || "",
+        AssignedTo: t.assignedTo || "",
+        CreatedAt: formatDate(t.createdAt || t.created_at) || "",
+        UpdatedAt: formatDate(t.updatedAt || t.updated_at) || "",
+        // add additional fields if you want, e.g. notes or id
+        ID: t._id || t.id || "",
+      }));
+
+      const csv = convertToCSV(csvData);
+      // prepend BOM for Excel compatibility
+      const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tasks_export_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export tasks:", err);
+      alert("Failed to export tasks. See console for details.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
    return (
   <div className="flex min-h-screen bg-gray-50 w-screen">
     {/* Sidebar */}
@@ -345,6 +417,19 @@ useEffect(() => {
               </h1>
             </div>
 
+            <div className="flex items-center gap-3">
+              {/* Export Tasks button - visible to Admin and Staff */}
+              {(user?.role?.toLowerCase() === "admin" || user?.role?.toLowerCase() === "staff") && (
+                <button
+                  onClick={handleExportTasks}
+                  disabled={exporting}
+                  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 px-4 py-2.5 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all disabled:opacity-50"
+                >
+                  <FaFileCsv />
+                  {exporting ? "Exporting..." : "Export CSV"}
+                </button>
+              )}
+
             {/* Add Task button only visible to admin */}
              {user?.role !== "staff" && (
               <button
@@ -355,6 +440,7 @@ useEffect(() => {
                 Add Task
               </button>
             )}
+            </div>
           </motion.div>
 
           {/* Filters Section */}
@@ -638,7 +724,7 @@ useEffect(() => {
                       <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-rose-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                            {task.assignedTo.charAt(0)}
+                            {task.assignedTo?.charAt(0) ?? "U"}
                           </div>
                           <span className="font-medium text-gray-800 text-sm truncate max-w-[160px]">
                             {task.assignedTo}
@@ -669,7 +755,6 @@ useEffect(() => {
     <FaTrash />
   </button>
 )}
-
                         </div>
                       </td>
                     </motion.tr>
@@ -719,7 +804,7 @@ useEffect(() => {
     </label>
    <input
   type="text"
-  value={selectedTask.title}
+  value={selectedTask?.title || ""}
   onChange={(e) =>
     setSelectedTask({ ...selectedTask, title: e.target.value })
   }
@@ -740,7 +825,7 @@ useEffect(() => {
     </label>
     <textarea
       rows="3"
-      value={selectedTask.description}
+      value={selectedTask?.description || ""}
       onChange={(e) =>
         setSelectedTask({ ...selectedTask, description: e.target.value })
       }
@@ -757,7 +842,7 @@ useEffect(() => {
     </label>
     <input
   type="date"
-  value={selectedTask.dueDate}
+  value={selectedTask?.dueDate || ""}
   onChange={(e) =>
     setSelectedTask({ ...selectedTask, dueDate: e.target.value })
   }

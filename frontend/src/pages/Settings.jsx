@@ -9,7 +9,6 @@ import {
   FaEnvelope,
   FaShieldAlt,
   FaEye,
-  FaTimes,
   FaPlus,
   FaEdit,
   FaFilter,
@@ -21,6 +20,7 @@ import {
   FaTasks,
   FaEyeSlash,
   FaClock,
+  FaFileCsv,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -114,7 +114,6 @@ const Settings = () => {
         headers: getAuthHeaders(),
       });
 
-      console.log("GET /api/users response:", res.status, res.data);
 
       if (Array.isArray(res.data)) {
         setUsers(res.data.map(mapServerUserToClient));
@@ -258,49 +257,112 @@ const Settings = () => {
   });
 
   // Export to CSV functionality (client-side)
-  const handleExport = () => {
-    const headers = [
-      "Name",
-      "Email",
-      "Role",
-      "Status",
-      "Leads",
-      "Tasks",
-      "Clients",
-      "Join Date",
-    ];
-    const csvData = filteredUsers.map((user) => [
-      user.name,
-      user.email,
-      user.role,
-      user.status,
-      user.workSummary.leads,
-      user.workSummary.tasks,
-      user.workSummary.clients,
-      user.joinDate,
-    ]);
+  // Replace your existing handleExport with this (put near the other helpers in your Settings component)
 
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map((row) => row.join(",")),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `users_export_${new Date().toISOString().split("T")[0]}.csv`
-    );
-
-    link.style.visibility = "hidden";
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+const convertToCSV = (rows) => {
+  if (!Array.isArray(rows) || rows.length === 0) return "";
+  const keys = Object.keys(rows[0]);
+  const header = keys.join(",");
+  const escapeCell = (val) => {
+    if (val === null || val === undefined) return "";
+    const s = String(val);
+    // Escape double-quotes and wrap in quotes
+    return `"${s.replace(/"/g, '""')}"`;
   };
+  const csvRows = rows.map((r) => keys.map((k) => escapeCell(r[k])).join(","));
+  return [header, ...csvRows].join("\r\n");
+};
+
+const handleExportAllUsers = async () => {
+  const role = (user?.role || "").toString().toLowerCase();
+  if (!(role === "admin" || role === "staff")) {
+    alert("Export allowed for Admin or Staff only.");
+    return;
+  }
+
+  setLoading(true); // optional UI feedback; you can create separate exporting state if preferred
+  try {
+    // Try to fetch the latest full list of users from the server.
+    // If your backend paginates, replace with a dedicated export endpoint (e.g. /users/export).
+    const res = await axios.get(API_BASE, {
+      headers: getAuthHeaders(),
+    });
+
+    // Server might return array or { users: [] }
+    const rawUsers = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.users) ? res.data.users : []);
+    // Fallback to currently loaded "users" state if server responded unexpectedly
+    const serverUsers = rawUsers.length ? rawUsers : users.map(u => ({ // convert back to raw-ish shape if needed
+      _id: u.id, fullName: u.name, email: u.email, role: u.role, status: u.status,
+      createdAt: u.joinDate, workSummary: u.workSummary
+    }));
+
+    // Map to CSV-friendly objects (flatten)
+    const csvRows = serverUsers.map((u) => {
+      // If we got server objects (not mapped to client), try to normalize
+      const mapped = mapServerUserToClient(u);
+      return {
+        ID: mapped.id ?? "",
+        Name: mapped.name ?? "",
+        Email: mapped.email ?? "",
+        Role: mapped.role ?? "",
+        Status: mapped.status ?? "",
+        Leads: mapped.workSummary?.leads ?? 0,
+        Tasks: mapped.workSummary?.tasks ?? 0,
+        Clients: mapped.workSummary?.clients ?? 0,
+        JoinDate: mapped.joinDate ?? "",
+        AvatarUrl: mapped.avatarUrl ?? "",
+      };
+    });
+
+    const csv = convertToCSV(csvRows);
+    if (!csv) {
+      alert("No users to export.");
+      return;
+    }
+
+    // Prepend BOM for Excel compatibility
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Failed to export users (full):", err?.response?.data ?? err.message);
+    // fallback: try to export the filteredUsers currently displayed
+    if (filteredUsers && filteredUsers.length) {
+      const fallbackRows = filteredUsers.map((m) => ({
+        ID: m.id ?? "",
+        Name: m.name ?? "",
+        Email: m.email ?? "",
+        Role: m.role ?? "",
+        Status: m.status ?? "",
+        Leads: m.workSummary?.leads ?? 0,
+        Tasks: m.workSummary?.tasks ?? 0,
+        Clients: m.workSummary?.clients ?? 0,
+        JoinDate: m.joinDate ?? "",
+        AvatarUrl: m.avatarUrl ?? "",
+      }));
+      const csv = convertToCSV(fallbackRows);
+      const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `users_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } else {
+      alert("Failed to export users. See console for details.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden w-screen">
@@ -337,14 +399,14 @@ const Settings = () => {
             {/* Right side - Buttons */}
             <div className="flex items-center gap-3 mr-6">
               {/* Export Button */}
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-lg font-medium shadow-sm transition-all duration-200"
-              >
-                <FaFileExport className="w-4 h-4" />
-                <span>Export</span>
-              </button>
-
+              {/* Export Button */}
+<button
+  onClick={handleExportAllUsers}
+  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 px-4 py-2.5 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all duration-200"
+>
+  <FaFileCsv className="w-4 h-4" />
+  <span>Export</span>
+</button>
               {/* Add User Button */}
               <button
                 onClick={() => setShowAddModal(true)}

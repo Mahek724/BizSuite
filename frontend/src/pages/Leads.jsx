@@ -26,6 +26,7 @@ import {
   FaUserTie,
   FaTh,
   FaChevronDown,
+  FaFileCsv,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -39,6 +40,7 @@ const Leads = () => {
   const isAdmin = (user?.role || localStorage.getItem("role") || "")
     .toString()
     .toLowerCase() === "admin";
+  const isStaff = (user?.role || "").toString().toLowerCase() === "staff";
 
   // attach auth header
   api.interceptors.request.use((cfg) => {
@@ -49,6 +51,7 @@ const Leads = () => {
 
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -102,7 +105,6 @@ const Leads = () => {
         const uniqueStaff = Array.from(new Set(res.data.staff.map((s) => s.fullName)));
 
         setStaffOptions(["All Staff", ...uniqueStaff]);
-        console.log("✅ Staff loaded:", uniqueStaff);
       } catch (err) {
         console.error("❌ Failed to fetch staff list:", (err.response && err.response.data) || err.message);
         // keep default fallback
@@ -345,6 +347,81 @@ const Leads = () => {
   // Stage options when editing: admin = full list, staff = only Won/Lost
   const editStageOptions = isAdmin ? stages.filter((s) => s !== "All Stages") : ["Won", "Lost"];
 
+  // -----------------------
+  // CSV Export helpers
+  // -----------------------
+  const convertToCSV = (objArray) => {
+    const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray || "[]");
+    if (!array.length) return "";
+    const keys = Object.keys(array[0]);
+    const header = keys.join(",");
+    const rows = array.map(row =>
+      keys
+        .map(k => {
+          const cell = row[k] ?? "";
+          return `"${String(cell).replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+    return [header, ...rows].join("\r\n");
+  };
+
+  /**
+   * Export all leads as CSV.
+   * - Admin and Staff allowed.
+   * - Fetches all leads from backend (no filters) to ensure full export.
+   * - If your dataset is large, consider server-side streaming endpoint instead.
+   */
+  const handleExportAllLeads = async () => {
+    if (!(isAdmin || isStaff)) {
+      alert("Export allowed for Admin or Staff only.");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      // Try to fetch all leads. If backend supports pagination, consider adding a special endpoint /leads/export
+      const res = await api.get("/leads", { params: {} });
+      // backend may return an array or { leads: [] }
+      const dataArray = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.leads) ? res.data.leads : []);
+      if (!dataArray || dataArray.length === 0) {
+        alert("No leads available to export.");
+        setExporting(false);
+        return;
+      }
+
+      // Map to desired CSV columns
+      const csvData = dataArray.map((c) => ({
+        Name: c.name || "",
+        Email: c.email || "",
+        Company: c.company || "",
+        Value: c.value ?? "",
+        Stage: c.stage || "",
+        Source: c.source || "",
+        AssignedTo: c.assignedTo || "",
+        CreatedAt: c.createdAt || c.created_at || "",
+        UpdatedAt: c.updatedAt || c.updated_at || "",
+        Notes: c.notes || "",
+      }));
+
+      const csv = convertToCSV(csvData);
+      const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `leads_export_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export leads:", (err.response && err.response.data) || err.message);
+      alert("Failed to export leads. See console for details.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
   <div className="flex min-h-screen w-screen bg-gray-50 overflow-hidden">
     {/* Sidebar - sticky on the left */}
@@ -401,6 +478,18 @@ const Leads = () => {
                   <FaListUl className="w-5 h-5" />
                 </button>
               </div>
+
+              {/* Export All Leads - visible to Admin or Staff */}
+              {(isAdmin || isStaff) && (
+                <button
+                  onClick={handleExportAllLeads}
+                  disabled={exporting}
+                  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 px-4 py-2.5 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all disabled:opacity-50"
+                >
+                  <FaFileCsv />
+                  {exporting ? "Exporting..." : "Export CSV"}
+                </button>
+              )}
 
               {isAdmin && (
                 <button
@@ -761,6 +850,7 @@ const Leads = () => {
               )}
             </AnimatePresence>
           </div>
+
 
           {/* Modals */}
           <AnimatePresence>

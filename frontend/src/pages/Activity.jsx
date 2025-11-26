@@ -23,10 +23,11 @@ import {
   FaTimes,
   FaRupeeSign,
   FaTrash,
+  FaFileCsv,
 } from "react-icons/fa";
 
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '')}/api`,
+  baseURL: `${import.meta.env.VITE_API_URL?.replace(/\/$/, "")}/api`,
 });
 
 const Activity = () => {
@@ -71,6 +72,9 @@ const Activity = () => {
 
   // UI state specifically for pinned section
   const [pinnedCollapsed, setPinnedCollapsed] = useState(false);
+
+  // export state
+  const [exporting, setExporting] = useState(false);
 
   function getInitials(name = "") {
     return name
@@ -549,6 +553,90 @@ const Activity = () => {
   const totalActivities = summary.totalActivities ?? activities.length;
   const tasksCompleted = summary.tasksCompleted ?? 0;
 
+  // -----------------------
+  // CSV Export helpers for Activities
+  // -----------------------
+  const convertToCSV = (objArray) => {
+    const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray || "[]");
+    if (!array.length) return "";
+    const keys = Object.keys(array[0]);
+    const header = keys.join(",");
+    const rows = array.map((row) =>
+      keys
+        .map((k) => {
+          const cell = row[k] ?? "";
+          // Escape double quotes and wrap in quotes
+          return `"${String(cell).replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+    return [header, ...rows].join("\r\n");
+  };
+
+  const formatTimestamp = (iso) => {
+    if (!iso) return "";
+    try {
+      return new Date(iso).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  /**
+   * Export CSV for listed activities (filteredActivities).
+   * Visible to Admin and Staff.
+   */
+  const handleExportActivities = async () => {
+    const role = (user?.role || "").toLowerCase();
+    if (!(role === "admin" || role === "staff")) {
+      alert("Export allowed for Admin or Staff only.");
+      return;
+    }
+
+    if (!filteredActivities || filteredActivities.length === 0) {
+      alert("No activities available to export.");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const csvData = filteredActivities.map((a) => ({
+        ID: a.id ?? "",
+        Type: a.type ?? "",
+        Title: a.title ?? "",
+        Description: a.description ?? "",
+        User: a.user?.fullName || a.user?.name || "",
+        Timestamp: formatTimestamp(a.timestamp),
+        Likes: a.likes ?? 0,
+        CommentsCount: Array.isArray(a.comments) ? a.comments.length : 0,
+        IsPinned: a.isPinned ? "Yes" : "No",
+      }));
+
+      const csv = convertToCSV(csvData);
+      const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `activities_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export activities:", err);
+      alert("Failed to export activities. See console for details.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-screen bg-gray-50 overflow-hidden">
       <aside className="sticky top-0 h-screen">
@@ -583,23 +671,37 @@ const Activity = () => {
               </p>
             </div>
 
-            <button
-              onClick={() => {
-                setNewActivity((prev) => ({
-                  ...prev,
-                  user: {
-                    name: user?.fullName || user?.name || "You",
-                    initials: getInitials(user?.fullName || user?.name || "You"),
-                    color: prev.user?.color || "#F87171",
-                  },
-                }));
-                setShowAddModal(true);
-              }}
-              className="flex items-center gap-2 mr-6 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-            >
-              <FaPlus className="w-4 h-4" />
-              Add Activity
-            </button>
+            <div className="flex items-center gap-3 mr-6">
+              {/* Export CSV button - Admin & Staff */}
+              {(user?.role?.toLowerCase() === "admin" || user?.role?.toLowerCase() === "staff") && (
+                <button
+                  onClick={handleExportActivities}
+                  disabled={exporting}
+                  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 px-4 py-2.5 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all disabled:opacity-50"
+                >
+                  <FaFileCsv />
+                  {exporting ? "Exporting..." : "Export CSV"}
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  setNewActivity((prev) => ({
+                    ...prev,
+                    user: {
+                      name: user?.fullName || user?.name || "You",
+                      initials: getInitials(user?.fullName || user?.name || "You"),
+                      color: prev.user?.color || "#F87171",
+                    },
+                  }));
+                  setShowAddModal(true);
+                }}
+                className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+              >
+                <FaPlus className="w-4 h-4" />
+                Add Activity
+              </button>
+            </div>
           </motion.div>
 
           {/* summary cards (unchanged) */}

@@ -17,6 +17,7 @@ import {
   FaEnvelope,
   FaTag,
   FaStickyNote,
+  FaFileCsv,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -24,12 +25,12 @@ const api = axios.create({
 });
 
 const Notes = () => {
-     const { user } = useAuth();
-     const token = user?.token || localStorage.getItem("token");
+  const { user } = useAuth();
+  const token = user?.token || localStorage.getItem("token");
 
-  
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
@@ -38,7 +39,6 @@ const Notes = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [error, setError] = useState("");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-
 
   const [filters, setFilters] = useState({
     category: "All Categories",
@@ -56,26 +56,25 @@ const Notes = () => {
   ];
 
   useEffect(() => {
-  if (!token) return;
-  const fetchNotes = async () => {
-    try {
-      const { data } = await api.get("/notes", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNotes(data);
-    } catch (err) {
-      console.error("Error fetching notes:", err.response?.data || err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (!token) return;
+    const fetchNotes = async () => {
+      try {
+        const { data } = await api.get("/notes", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setNotes(data);
+      } catch (err) {
+        console.error("Error fetching notes:", err.response?.data || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchNotes(); // initial fetch
+    fetchNotes(); // initial fetch
 
-  const interval = setInterval(fetchNotes, 30000); // refresh every 30 seconds
-  return () => clearInterval(interval);
-}, [token]);
-
+    const interval = setInterval(fetchNotes, 30000); // refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, [token]);
 
   const sortOptions = ["Recent", "Oldest", "A-Z", "Z-A"];
 
@@ -106,37 +105,36 @@ const Notes = () => {
   };
 
   const handleSaveNote = async (e) => {
-  e.preventDefault();
-  const validation = validateForm();
-  if (validation) {
-    setError(validation);
-    return;
-  }
-
-  try {
-    if (selectedNote._id) {
-      // Update existing note
-      const res = await api.put(`/notes/${selectedNote._id}`, selectedNote, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setNotes(notes.map((n) => (n._id === selectedNote._id ? res.data : n)));
-      setIsEditFormOpen(false);
-    } else {
-      // Add new note
-      const res = await api.post("/notes", selectedNote, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setNotes([res.data, ...notes]);
-      setIsAddFormOpen(false);
+    e.preventDefault();
+    const validation = validateForm();
+    if (validation) {
+      setError(validation);
+      return;
     }
-    setSelectedNote(null);
-    setError("");
-  } catch (err) {
-    console.error("Error saving note:", err);
-    setError("Failed to save note. Please try again.");
-  }
-};
 
+    try {
+      if (selectedNote._id) {
+        // Update existing note
+        const res = await api.put(`/notes/${selectedNote._id}`, selectedNote, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotes(notes.map((n) => (n._id === selectedNote._id ? res.data : n)));
+        setIsEditFormOpen(false);
+      } else {
+        // Add new note
+        const res = await api.post("/notes", selectedNote, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotes([res.data, ...notes]);
+        setIsAddFormOpen(false);
+      }
+      setSelectedNote(null);
+      setError("");
+    } catch (err) {
+      console.error("Error saving note:", err);
+      setError("Failed to save note. Please try again.");
+    }
+  };
 
   const handleEditNote = (note) => {
     setSelectedNote(note);
@@ -153,30 +151,28 @@ const Notes = () => {
   };
 
   const handleDelete = async () => {
-  if (!deleteConfirm?._id) return;
-  try {
-    await api.delete(`/notes/${deleteConfirm._id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setNotes(notes.filter((n) => n._id !== deleteConfirm._id));
-    setDeleteConfirm(null);
-  } catch (err) {
-    console.error("Error deleting note:", err);
-  }
-};
-
+    if (!deleteConfirm?._id) return;
+    try {
+      await api.delete(`/notes/${deleteConfirm._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotes(notes.filter((n) => n._id !== deleteConfirm._id));
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error("Error deleting note:", err);
+    }
+  };
 
   const handleTogglePin = async (noteId) => {
-  try {
-    const res = await api.patch(`/notes/${noteId}/pin`, {}, {
-      headers: {Authorization: `Bearer ${token}` },
-    });
-    setNotes(notes.map((n) => (n._id === noteId ? res.data : n)));
-  } catch (err) {
-    console.error("Error toggling pin:", err);
-  }
-};
-
+    try {
+      const res = await api.patch(`/notes/${noteId}/pin`, {}, {
+        headers: {Authorization: `Bearer ${token}` },
+      });
+      setNotes(notes.map((n) => (n._id === noteId ? res.data : n)));
+    } catch (err) {
+      console.error("Error toggling pin:", err);
+    }
+  };
 
   const closeModal = () => {
     setIsAddFormOpen(false);
@@ -205,28 +201,96 @@ const Notes = () => {
       }
     });
 
-    const formatDate = (dateString) => {
-  const options = {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const options = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    };
+    return new Date(dateString).toLocaleString("en-US", options);
   };
-  return new Date(dateString).toLocaleString("en-US", options);
-};
 
-const sortNotes = (list) => {
-  if (filters.sortBy === "Recent") return [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  if (filters.sortBy === "Oldest") return [...list].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  if (filters.sortBy === "A-Z") return [...list].sort((a, b) => a.title.localeCompare(b.title));
-  return [...list].sort((a, b) => b.title.localeCompare(a.title));
-};
-console.log("User in Notes:", user);
+  const sortNotes = (list) => {
+    if (filters.sortBy === "Recent") return [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (filters.sortBy === "Oldest") return [...list].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    if (filters.sortBy === "A-Z") return [...list].sort((a, b) => a.title.localeCompare(b.title));
+    return [...list].sort((a, b) => b.title.localeCompare(a.title));
+  };
 
-const pinnedNotes = sortNotes(filteredNotes.filter(n => n.pinnedBy?.includes(user.id)));
-const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(user.id)));
+  const pinnedNotes = sortNotes(filteredNotes.filter(n => n.pinnedBy?.includes(user?.id)));
+  const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(user?.id)));
+
+  // -----------------------
+  // CSV Export helpers
+  // -----------------------
+  const convertToCSV = (objArray) => {
+    const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray || "[]");
+    if (!array.length) return "";
+    const keys = Object.keys(array[0]);
+    const header = keys.join(",");
+    const rows = array.map(row =>
+      keys
+        .map(k => {
+          const cell = row[k] ?? "";
+          // Escape double quotes and wrap in quotes
+          return `"${String(cell).replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+    return [header, ...rows].join("\r\n");
+  };
+
+  /**
+   * Export CSV for all currently listed notes (filteredNotes).
+   * Visible to Admin and Staff.
+   */
+  const handleExportNotes = async () => {
+    const role = (user?.role || "").toLowerCase();
+    if (!(role === "admin" || role === "staff")) {
+      alert("Export allowed for Admin or Staff only.");
+      return;
+    }
+
+    if (!filteredNotes || filteredNotes.length === 0) {
+      alert("No notes available to export.");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const csvData = filteredNotes.map(n => ({
+        Title: n.title || "",
+        Content: n.content || "",
+        Category: n.category || "",
+        Color: n.color || "",
+        PinnedBy: Array.isArray(n.pinnedBy) ? n.pinnedBy.join("; ") : (n.pinnedBy ? String(n.pinnedBy) : ""),
+        CreatedAt: formatDate(n.createdAt) || "",
+        UpdatedAt: formatDate(n.updatedAt || n.updated_at) || "",
+        CreatedBy: n.createdBy?.fullName || n.createdBy?.role || "",
+        ID: n._id || n.id || "",
+      }));
+
+      const csv = convertToCSV(csvData);
+      const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `notes_export_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export notes:", err);
+      alert("Failed to export notes. See console for details.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
 
   return (
@@ -236,122 +300,135 @@ const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(
       <div className="flex-1 overflow-hidden">
         <Navbar />
 
-
         <div className="p-6 overflow-y-auto h-[calc(100vh-80px)]">
           {/* Header Section */}
           <motion.div
-  className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
-  initial={{ opacity: 0, y: -20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5 }}
->
-  <div className="mb-4 lg:mb-0">
-    <h1
-      className="text-xl font-semibold tracking-wide"
-      style={{
-        color: "#B5828C",
-        fontFamily: "'Raleway', sans-serif",
-      }}
-    >
-      Capture and manage your notes
-    </h1>
-    <p className="text-gray-500 text-sm mt-1">
-      Capture ideas and important information
-    </p>
-  </div>
+            className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="mb-4 lg:mb-0">
+              <h1
+                className="text-xl font-semibold tracking-wide"
+                style={{
+                  color: "#B5828C",
+                  fontFamily: "'Raleway', sans-serif",
+                }}
+              >
+                Capture and manage your notes
+              </h1>
+              <p className="text-gray-500 text-sm mt-1">
+                Capture ideas and important information
+              </p>
+            </div>
 
-   <button
-      className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-      onClick={handleAddNote}
-    >
-      <FaPlus className="w-4 h-4" />
-      Add Note
-    </button>
-</motion.div>
+            <div className="flex items-center gap-3">
+              {/* Export CSV - Admin & Staff */}
+              {(user?.role?.toLowerCase() === "admin" || user?.role?.toLowerCase() === "staff") && (
+                <button
+                  onClick={handleExportNotes}
+                  disabled={exporting}
+                  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 px-4 py-2.5 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all disabled:opacity-50"
+                >
+                  <FaFileCsv />
+                  {exporting ? "Exporting..." : "Export CSV"}
+                </button>
+              )}
+
+              <button
+                className="flex items-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white px-4 py-2.5 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+                onClick={handleAddNote}
+              >
+                <FaPlus className="w-4 h-4" />
+                Add Note
+              </button>
+            </div>
+          </motion.div>
 
           {/* Filters Section */}
           <motion.div
-  className="bg-white rounded-2xl p-4 md:p-6 shadow-sm mb-6 border border-gray-100"
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ delay: 0.2 }}
->
-  {/* Stylish Title */}
-  <div className="flex items-center gap-2 mb-4">
-    <FaFilter className="text-[#E50046] w-5 h-5" />
-    <h2
-      className="text-lg font-bold"
-      style={{
-        fontFamily: "'Raleway', sans-serif",
-        color: "#E50046",
-      }}
-    >
-      Filter Notes
-    </h2>
-  </div>
+            className="bg-white rounded-2xl p-4 md:p-6 shadow-sm mb-6 border border-gray-100"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {/* Stylish Title */}
+            <div className="flex items-center gap-2 mb-4">
+              <FaFilter className="text-[#E50046] w-5 h-5" />
+              <h2
+                className="text-lg font-bold"
+                style={{
+                  fontFamily: "'Raleway', sans-serif",
+                  color: "#E50046",
+                }}
+              >
+                Filter Notes
+              </h2>
+            </div>
 
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {/* Category Dropdown */}
-<div className="relative">
-  <button
-    onClick={() =>
-      setFilters((prev) => ({
-        ...prev,
-        openCategory: !prev.openCategory,
-      }))
-    }
-    className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] shadow-sm cursor-pointer"
-  >
-    <span className="text-sm font-medium">{filters.category}</span>
-    <FaChevronDown className="ml-2 text-[#E50046]" />
-  </button>
-  {filters.openCategory && (
-    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-      {categories.map((category) => (
-        <div
-          key={category}
-          onClick={() => {
-            setFilters({ ...filters, category, openCategory: false });
-          }}
-          className="px-4 py-2 text-gray-700 hover:bg-rose-100 cursor-pointer transition-colors"
-        >
-          {category}
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Category Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      openCategory: !prev.openCategory,
+                    }))
+                  }
+                  className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] shadow-sm cursor-pointer"
+                >
+                  <span className="text-sm font-medium">{filters.category}</span>
+                  <FaChevronDown className="ml-2 text-[#E50046]" />
+                </button>
+                {filters.openCategory && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    {categories.map((category) => (
+                      <div
+                        key={category}
+                        onClick={() => {
+                          setFilters({ ...filters, category, openCategory: false });
+                        }}
+                        className="px-4 py-2 text-gray-700 hover:bg-rose-100 cursor-pointer transition-colors"
+                      >
+                        {category}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-{/* Sort By Dropdown */}
-<div className="relative">
-  <button
-    onClick={() =>
-      setFilters((prev) => ({
-        ...prev,
-        openSort: !prev.openSort,
-      }))
-    }
-    className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] shadow-sm cursor-pointer"
-  >
-    <span className="text-sm font-medium">{filters.sortBy}</span>
-    <FaChevronDown className="ml-2 text-[#E50046]" />
-  </button>
-  {filters.openSort && (
-    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-      {sortOptions.map((option) => (
-        <div
-          key={option}
-          onClick={() => setFilters({ ...filters, sortBy: option, openSort: false })}
-          className="px-4 py-2 text-gray-700 hover:bg-rose-100 cursor-pointer transition-colors"
-        >
-          {option}
-        </div>
-      ))}
-    </div>
-  )}
-</div>
-</div>
-</motion.div>
+              {/* Sort By Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      openSort: !prev.openSort,
+                    }))
+                  }
+                  className="w-full flex justify-between items-center border-2 border-[#FDAB9E] rounded-xl px-4 py-2 bg-[#FFF0BD] text-[#E50046] shadow-sm cursor-pointer"
+                >
+                  <span className="text-sm font-medium">{filters.sortBy}</span>
+                  <FaChevronDown className="ml-2 text-[#E50046]" />
+                </button>
+                {filters.openSort && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    {sortOptions.map((option) => (
+                      <div
+                        key={option}
+                        onClick={() => setFilters({ ...filters, sortBy: option, openSort: false })}
+                        className="px-4 py-2 text-gray-700 hover:bg-rose-100 cursor-pointer transition-colors"
+                      >
+                        {option}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
 
           {/* Pinned Notes Section */}
           {pinnedNotes.length > 0 && (
@@ -375,8 +452,6 @@ const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(
                 {pinnedNotes.map((note, index) => (
                   <motion.div
                     key={note._id}
-
-                    
                     className="rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer relative group"
                     style={{ backgroundColor: note.color }}
                     initial={{ opacity: 0, y: 20 }}
@@ -415,52 +490,39 @@ const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(
                     <div className="flex items-center gap-1 text-xs text-gray-600 mb-4">
                       <FaClock className="w-3 h-3" />
                       <span>{formatDate(note.createdAt)}</span>
-
                     </div>
 
-                   {user?.role === "admin" && note.createdBy && (
-  <div className="mt-2 text-sm font-semibold text-gray-800">
-    {note.createdBy.fullName
-      ? `${note.createdBy.fullName} - ${note.createdBy.role.charAt(0).toUpperCase() + note.createdBy.role.slice(1)}`
-      : note.createdBy.role}
-  </div>
-)}
-
-
-
+                    {user?.role === "admin" && note.createdBy && (
+                      <div className="mt-2 text-sm font-semibold text-gray-800">
+                        {note.createdBy.fullName
+                          ? `${note.createdBy.fullName} - ${note.createdBy.role.charAt(0).toUpperCase() + note.createdBy.role.slice(1)}`
+                          : note.createdBy.role}
+                      </div>
+                    )}
 
                     {/* Action Buttons */}
-                    {/* Action Buttons - Always Visible */}
-{/* Action Buttons - Always Visible with Different Colors */}
-<div className="flex gap-2 mt-4">
-  {/* View Button - Blue */}
-  <button
-    onClick={() => handleViewDetails(note)}
-    className="flex-1 flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
-  >
-    <FaEye className="w-3.5 h-3.5" />
-    
-  </button>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => handleViewDetails(note)}
+                        className="flex-1 flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+                      >
+                        <FaEye className="w-3.5 h-3.5" />
+                      </button>
 
-  {/* Edit Button - Green */}
-  <button
-    onClick={() => handleEditNote(note)}
-    className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
-  >
-    <FaEdit className="w-3.5 h-3.5" />
-  
-  </button>
+                      <button
+                        onClick={() => handleEditNote(note)}
+                        className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+                      >
+                        <FaEdit className="w-3.5 h-3.5" />
+                      </button>
 
-  {/* Delete Button - Red */}
-  <button
-    onClick={() => handleDeleteConfirm(note)}
-    className="flex-1 flex items-center justify-center gap-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
-  >
-    <FaTrash className="w-3.5 h-3.5" />
-    
-  </button>
-</div>
-
+                      <button
+                        onClick={() => handleDeleteConfirm(note)}
+                        className="flex-1 flex items-center justify-center gap-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
+                      >
+                        <FaTrash className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -468,17 +530,14 @@ const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(
           )}
 
           {/* All Notes Section - Regular Grid (No Masonry) */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
             {unpinnedNotes.length > 0 && (
               <h2 className="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
                 <FaStickyNote className="text-rose-400" />
                 All Notes
               </h2>
             )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {unpinnedNotes.map((note, index) => (
                 <motion.div
@@ -490,26 +549,14 @@ const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ y: -5 }}
                 >
-                  {/* Pin Icon */}
-                  <button
-                    onClick={() => handleTogglePin(note._id)}
-                    className="absolute top-3 right-3 text-gray-400 hover:text-rose-500 transition-colors"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
+                  <button onClick={() => handleTogglePin(note._id)} className="absolute top-3 right-3 text-gray-400 hover:text-rose-500 transition-colors">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" />
                     </svg>
                   </button>
 
-                  <h3 className="font-bold text-gray-800 text-lg mb-3 pr-8 break-words">
-                    {note.title}
-                  </h3>
-                  <p className="text-gray-700 text-sm mb-4 line-clamp-4 break-words">
-                    {note.content}
-                  </p>
+                  <h3 className="font-bold text-gray-800 text-lg mb-3 pr-8 break-words">{note.title}</h3>
+                  <p className="text-gray-700 text-sm mb-4 line-clamp-4 break-words">{note.content}</p>
 
                   <div className="flex items-center justify-between mb-3">
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-white bg-opacity-60 text-gray-700">
@@ -521,54 +568,37 @@ const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(
                   <div className="flex items-center gap-1 text-xs text-gray-600 mb-4">
                     <FaClock className="w-3 h-3" />
                     <span>{formatDate(note.createdAt)}</span>
-
                   </div>
 
-                  {/* Created By (Visible only to admin) */}
-{user?.role === "admin" && note.createdBy && (
-  <div className="mt-2 text-sm font-semibold text-gray-800">
-    {note.createdBy.fullName
-      ? `${note.createdBy.fullName} - ${note.createdBy.role.charAt(0).toUpperCase() + note.createdBy.role.slice(1)}`
-      : note.createdBy.role}
-  </div>
-)}
+                  {user?.role === "admin" && note.createdBy && (
+                    <div className="mt-2 text-sm font-semibold text-gray-800">
+                      {note.createdBy.fullName
+                        ? `${note.createdBy.fullName} - ${note.createdBy.role.charAt(0).toUpperCase() + note.createdBy.role.slice(1)}`
+                        : note.createdBy.role}
+                    </div>
+                  )}
 
-{/* Action Buttons - Always Visible with Different Colors */}
-<div className="flex gap-2 mt-4">
-  {/* View Button - Blue */}
-  <button
-    onClick={() => handleViewDetails(note)}
-    className="flex-1 flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
-  >
-    <FaEye className="w-3.5 h-3.5" />
-    
-  </button>
+                  <div className="flex gap-2 mt-4">
+                    <button onClick={() => handleViewDetails(note)} className="flex-1 flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-all text-sm font-medium">
+                      <FaEye className="w-3.5 h-3.5" />
+                    </button>
 
-  {/* Edit Button - Green */}
-  <button
-    onClick={() => handleEditNote(note)}
-    className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
-  >
-    <FaEdit className="w-3.5 h-3.5" />
-    
-  </button>
+                    <button onClick={() => handleEditNote(note)} className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition-all text-sm font-medium">
+                      <FaEdit className="w-3.5 h-3.5" />
+                    </button>
 
-  {/* Delete Button - Red */}
-  <button
-    onClick={() => handleDeleteConfirm(note)}
-    className="flex-1 flex items-center justify-center gap-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-all text-sm font-medium"
-  >
-    <FaTrash className="w-3.5 h-3.5" />
-    
-  </button>
-</div>
-
+                    <button onClick={() => handleDeleteConfirm(note)} className="flex-1 flex items-center justify-center gap-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-all text-sm font-medium">
+                      <FaTrash className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </motion.div>
               ))}
             </div>
           </motion.div>
         </div>
       </div>
+
+    
 
       {/* Add/Edit Modal */}
       <AnimatePresence>

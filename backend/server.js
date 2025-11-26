@@ -18,6 +18,7 @@ import userRoutes from "./routes/userRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import aiSummaryRoute from "./routes/aiSummary.js";
 
 const app = express();
 
@@ -68,6 +69,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api/profile", profileRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/ai-summary", aiSummaryRoute);
+
 
 // ✅ Health check (for Render)
 app.get("/_health", (_req, res) => res.json({ ok: true }));
