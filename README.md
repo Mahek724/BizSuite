@@ -18,178 +18,386 @@ Built using the MERN Stack (MongoDB, Express.js, React.js, Node.js) with clean a
 👨‍💼 User Management (Admin Only)
 
 Add, edit, delete users
-
 Change role (Admin/Staff)
-
 Activate/Deactivate users
 
 👥 Client Management
 
 CRUD operations
-
 Assign clients to staff
-
 Client profile page
-
 Activity + Notes history
 
 🎯 Lead Management
 
 Full sales pipeline:
 New → Contacted → Negotiation → Won/Lost
-
 Kanban drag-and-drop board
-
 Lead profile + timeline
-
 Filter & search
 
 📝 Notes + 🕒 Activities
 
 Add notes for clients & leads
-
 Global activity timeline
-
 Filter by user/type/date
 
 📌 Tasks
 
 CRUD tasks
-
 Assign tasks to staff
-
 Mark as Completed/Pending
-
 Filter by date, status, user
 
 📊 Dashboard & Analytics
 
 Total clients, leads, tasks
-
 Conversion rate
-
 Recharts graphs (Pie/Bar/Line)
-
 Activity feed
 
 ⚙️ Settings & Profile
 
 Update personal info
 Change password
-
 Upload profile picture
-
 Admin company settings
 
----
-
-## 🌟 Features
-
-- *Role-Based Access*
-  - 👨‍💼 Admin → Full control over users, clients, leads, tasks, analytics.  
-  - 👩‍💻 Staff → Access only to assigned leads, clients, and tasks.  
-
-- *Clients Management*
-  - Add, edit, delete clients with profile history.  
-  - Assign staff to clients.  
-
-- *Leads Management*
-  - Kanban pipeline → New → Contacted → Deal → Won/Lost.  
-  - Drag-and-drop leads between stages.  
-  - Lead profiles with notes and activity timeline.  
-
-- *Task Management*
-  - Create, assign, and track tasks.  
-  - Mark tasks as completed.  
-  - Filter by user or status.  
-
-- *Notes & Activity Timeline*
-  - Notes linked to leads/clients.  
-  - Global log of all updates (lead changes, task completions, client additions).  
-
-- *Analytics Dashboard*
-  - Quick stats (Total Clients, Leads, Tasks, Conversion Rate).  
-  - Charts (Leads by stage, source breakdown, sales trends).  
-
-- *Notifications*
+Notifications
   - Alerts for task assignments, lead updates, and due dates.  
+---
+Tech Stack    
 
-- *Profile & Settings*
-  - Personal profile updates (name, email, password).  
-  - Admin settings (company details, user management).  
+🖥 Frontend  React.js, Redux Toolkit
+Library	                    Purpose
+React 19	                  UI Framework
+React Router 7	            R outing
+Axios	                      API Calls
+Tailwind CSS / Bootstrap	  Styling
+Recharts	                  Charts
+Lucide Icons	              Icons
+Framer Motion	          Animations
+Hosting:* Vercel
+
+
+ Backend
+ 
+Library	                      Purpose
+Node.js	                      Runtime
+Express.js	                    REST API
+MongoDB + Mongoose	          Database
+JWT	                              Auth
+bcryptjs	                    Password hashing
+Multer	                      File uploads
+Morgan	                        Request logging
+Passport + Google OAuth	        Social Login
 
 ---
 
-## 🛠 Tech Stack
+Project Structur
 
-- *Frontend:* React.js, Redux Toolkit, Axios  
-- *Backend:* Node.js, Express.js  
-- *Database:* MongoDB, Mongoose  
-- *Authentication:* JWT, bcrypt  
-- *Charts:* Recharts / Chart.js  
-- *UI Styling:* Tailwind CSS / Material UI  
-- *Hosting:* Vercel/Netlify (Frontend), Render/Railway/AWS (Backend), MongoDB Atlas  
+Root Folder
+
+BizSuite/
+│
+├── backend/
+├── frontend/
+├── docs/
+│
+├── package.json
+├── README.md
+└── .gitignore
+
+
+Backend Folder
+
+backend/
+│
+├── config/
+│   ├── db.js
+│   └── passport.js          # (if used)
+│
+├── controllers/
+│   ├── activityController.js
+│   ├── authController.js
+│   ├── leadController.js
+│   ├── notificationController.js
+│   ├── profileController.js
+│   ├── aiControleer.js
+│   ├── clientController.js
+│   ├── dashboardController.js
+│   └── userController.js
+│   └── taskController.js
+│   └── noteController.js
+│
+├── middleware/
+│   ├── auth.js
+│   
+├── models/
+│   ├── User.js
+│   ├── Lead.js
+│   ├── Activity.js
+│   ├── Notification.js
+│   ├── Client.js
+│   ├── Note.js
+│   ├── Task.js
+│
+├── routes/
+│   ├── activityRoutes.js
+│   ├── authRoutes.js
+│   ├── leadRoutes.js
+│   ├── notificationRoutes.js
+│   ├── profileRoutes.js
+│   └── userRoutes.js
+│   ├── aisummaryRoutes.js
+│   ├── clientRoutes.js
+│   ├── dashboardRoutes.js
+│   ├── noteRoutes.js
+│   └── taskRoutes.js
+│
+├── uploads/  avatrs                 
+│
+├── utils/
+│   ├── sendNotification.js
+│
+├── .env
+.gitignore
+├── jest.config.cjs
+├── package.json
+├── package-lock.json
+└── server.js
+
+
+frontend/
+│
+├── public/
+│   └── favicon.svg
+│
+├── src/
+│   │
+│   ├── assets/
+        css/
+          auth.css
+          forgorpassword.css
+          lead.css
+          profile.css
+│   │   └── react.svg
+│   │
+│   ├── components/
+│   │   ├── Navbar.jsx
+│   │   ├── Sidebar.jsx
+│   │   ├── Profile.jsx
+│   │   ├── AisummaryCard.jsx
+│   │   
+│   │
+│   ├── context/
+│   │   ├── AuthContext.jsx
+│   │   └── 
+│   │
+│   ├── hooks/
+│   │   ├── useAisummary.js
+│   │
+│   ├── pages/
+│   │   ├── Dashboard.jsx
+            Activity.jsx
+            AuthPage.jsx
+│   │   ├── Client.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── ForgotPassword.jsx
+│   │   ├── Leads.jsx
+│   │   └── Notes.jsx
+          Resetpassword.jsx
+          settinf.jsx
+          task.jsx
+│   │
+│   ├── services/
+│   │   ├── dashboardai.js
+│   │
+│   ├── App.jsx
+│   ├── App.css
+│   ├── index.css
+│   └── main.jsx
+│
+├── .env.development
+├── .env.production
+    .gitignore
+    postcss.congif.js
+    tailwind.config.js
+├── package.json
+├── package-lock.json
+├── README.md
+├── eslint.config.js
+├── index.html
+└── vite.config.js
 
 ---
 
-## 📊 Why BizSuite?
+Installation & Setup
+1️⃣ Clone Repository
+git clone https://github.com/your-username/bizsuite.git
+cd bizsuite
 
-- ✅ *Lightweight & Simple* → Essential CRM features only.  
-- ✅ *Affordable* → No costly licenses like Salesforce or Zoho.  
-- ✅ *Scalable* → Grows as your business grows.  
-- ✅ *Team Friendly* → Role-based collaboration for Admin & Staff.  
+📌 Backend Setup
+Install dependencies
+cd backend
+npm install
 
----
+Required backend environment variables
 
-## 🔑 Project Objectives
+Create .env inside /backend:
 
-
-- Centralize business operations into one dashboard.  
-- Improve team collaboration with role-based permissions.
-- Track leads visually to improve conversion rates.  
-- Assign tasks & increase accountability.  
-- Provide insights with visual reports.  
-
----
-
-*⚡ Getting Started*
-1. Clone the Repo
-   bash
-   git clone https://github.com/your-username/bizsuite.git
-   cd bizsuite
-
-2. Install Dependencies
-
-Backend
-   bash
-  cd backend
-  npm install
-
-Frontend
-  bash
- cd frontend
- npm install
+PORT=5000
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database>?retryWrites=true&w=majority
+JWT_SECRET=<your-jwt-secret>
+JWT_EXPIRES=1d
+JWT_EXPIRES_LONG=30d
+FRONTEND_URL=http://localhost:5173
+CORS_ORIGINS=http://localhost:5173,https://your-frontend-domain.com
+EMAIL_USER=<your-email>
+EMAIL_PASS=<your-email-app-password>
+GOOGLE_CLIENT_ID=<google-client-id>
+GOOGLE_CLIENT_SECRET=<google-client-secret>
+GEMINI_API_KEY=<your-gemini-api-key>
 
 
-3. Setup Environment Variables
-Create a .env file in /backend with:
-   bash
-  MONGO_URI=your_mongodb_connection_string
-  JWT_SECRET=your_secret_key
-  PORT=5000
+Run backend
+npm run dev
 
 
-4. Run the Project
-Start backend:
-   bash
-   cd backend
-   npm start
+Backend runs at:
+📡 http://localhost:5000
 
-Start frontend:
-   bash
-   cd frontend
-   npm run dev
+💻 Frontend Setup
+Install dependencies
+cd frontend
+npm install
 
----
+Create .env in frontend:
+VITE_API_URL=http://localhost:5000/api
 
-The app should now run at http://localhost:5173 (frontend) and http://localhost:5000 (backend API).
+Run frontend
+npm run dev
+
+
+Frontend runs at:
+🌐 http://localhost:5173
+
+API Documentation
+
+
+Activity API Endpoints
+
+Method	Endpoint	Description	Auth Required
+GET	/api/activities/stats/summary	Get activity statistics summary (counts, trends, etc.)	✅ Yes
+GET	/api/activities	Fetch all activities (global or user-specific)	✅ Yes
+POST	/api/activities	Create a new activity entry	✅ Yes
+PUT	/api/activities/:id	Update an existing activity by ID	✅ Yes
+DELETE	/api/activities/:id	Delete an activity by ID	✅ Yes
+POST	/api/activities/:id/comments	Add a comment to an activity	✅ Yes
+PATCH	/api/activities/:id/pin	Toggle pin/unpin on an activity	✅ Yes
+PATCH	/api/activities/:id/like	Toggle like/unlike on an activity	✅ Yes
+
+
+Dashboard (AI Summary) API Endpoints
+
+Method	Endpoint	Description	Auth Required
+POST	/api/dashboard/summary	Generate an AI-powered summary for the dashboard (using Gemini/Groq/LLM).
+
+Auth API Endpoints
+
+Method	Endpoint	Description	Auth Required
+POST	/api/auth/signup	Register a new user (Admin creates staff or initial signup).	❌ No
+POST	/api/auth/login	Login user and return JWT token.	❌ No
+GET	/api/auth/me	Get currently logged-in user info (from token).	⚠️ Token expected in request
+POST	/api/auth/logout	Logout user (client removes JWT).	❌ No
+POST	/api/auth/forgot-password	Request password reset link via email.	❌ No
+POST	/api/auth/reset-password/:token	Reset password using valid token.	❌ No
+GET	/api/auth/staff	Get list of users with Staff role (Admin-only).	✅ Yes
+GET	/api/auth/google	Start Google OAuth login flow.	❌ No
+GET	/api/auth/google/callback	Google login callback → generate JWT → redirect to frontend.	❌
+
+
+
+Client API Endpoints
+
+Method	Endpoint	Description
+GET	/api/clients	Get all clients (with filters/search).
+GET	/api/clients/:id	Get a single client by ID.
+POST	/api/clients	Create a new client.
+PUT	/api/clients/:id	Update an existing client.
+DELETE	/api/clients/:id	Delete a client.
+GET	/api/clients/tags/assigned	Get all assigned tags from client records.
+
+Dashboard API Endpoints
+
+Method	Endpoint	Description
+GET	/api/dashboard/summary	Fetch overall dashboard summary (counts, stats).
+GET	/api/dashboard/leads-by-stage	Get leads grouped by pipeline stages.
+GET	/api/dashboard/leads-by-source	Get leads grouped by lead source.
+GET	/api/dashboard/sales-trend	Get monthly/weekly sales trend data.
+GET	/api/dashboard/recent-activity	Fetch recent activity timeline for dashboard.
+
+
+Lead API Endpoints
+
+Method	Endpoint	Description
+POST	/api/leads	Create a new lead.
+GET	/api/leads	Get all leads (with filters/search).
+GET	/api/leads/sources/all	Get all available lead sources.
+GET	/api/leads/:id	Get a lead by its ID.
+PUT	/api/leads/:id	Update an existing lead.
+DELETE	/api/leads/:id	Delete a lead by its ID.
+
+Notes API Endpoints
+
+Method	Endpoint	Description
+GET	/api/notes	Get all notes (with filters).
+POST	/api/notes	Create a new note.
+PUT	/api/notes/:id	Update a note by ID.
+DELETE	/api/notes/:id	Delete a note by ID.
+PATCH	/api/notes/:id/pin	Toggle pin/unpin on a note.
+
+
+Notification API Endpoints
+
+Method	Endpoint	Description
+GET	/api/notifications	Get all notifications for the user.
+PUT	/api/notifications/:id/read	Mark a specific notification as read.
+DELETE	/api/notifications/clear	Clear all notifications.
+PUT	/api/notifications/read-all	Mark all notifications as read.
+
+Profile API Endpoints
+
+Method	Endpoint	Description
+GET	/api/profile	Get the logged-in user's profile details.
+PUT	/api/profile/update	Update profile information (name, email, etc.).
+POST	/api/profile/avatar	Upload or update profile avatar.
+PUT	/api/profile/change-password	Change account password.
+GET	/api/profile/activity-summary	Get user activity summary stats.
+PUT	/api/profile/notifications	Update notification preferences.
+
+Task API Endpoints
+
+Method	Endpoint	Description
+GET	/api/tasks	Get all tasks.
+GET	/api/tasks/:id	Get a task by ID.
+POST	/api/tasks	Create a new task.
+PUT	/api/tasks/:id	Update an existing task.
+DELETE	/api/tasks/:id	Delete a task by ID.
+
+
+User Management API (Admin) Endpoints
+
+Method	Endpoint	Description
+GET	/api/users	Get all users (Admin only).
+POST	/api/users	Add a new user (Admin only).
+PUT	/api/users/:id	Update user details (Admin only).
+DELETE	/api/users/:id	Delete a user by ID (Admin only).
+
+
+
+
+
+
+
+
