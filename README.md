@@ -366,10 +366,5 @@ Contributions are welcome. Please open issues or PRs describing the change. Foll
 
 ---
 
-## 📄 License
-Specify a license (e.g., MIT) in the root of the repo if you wish to open-source it.
-
----
-
 ## 📬 Contact
-For questions or help, add your contact or company email here.
+For questions or help contact on mahek72.mp@gmail.com
