@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // get api via hook
+import { useAuth } from "../context/AuthContext"; 
 import "../assets/css/forgotPassword.css";
 
 export default function ResetPassword() {
@@ -9,6 +9,13 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // ✅ useRef for input focus
+  const passwordRef = useRef(null);
+
+  useEffect(() => {
+    passwordRef.current?.focus(); // autofocus password input on mount
+  }, []);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +39,7 @@ export default function ResetPassword() {
       <p>Set a new password for your account.</p>
       <form onSubmit={onSubmit}>
         <input
+          ref={passwordRef} // ← useRef attached here
           type="password"
           placeholder="New password"
           value={password}
