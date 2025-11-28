@@ -1,7 +1,7 @@
-# 🚀 BizSuite – Mini CRM for Small Businesses
+🚀 BizSuite – Mini CRM for Small Businesses
 
-*BizSuite* is a lightweight *Mini CRM (Customer Relationship Management)* system built with the *MERN stack* (MongoDB, Express.js, React.js, Node.js).  
-It helps small businesses and startups centralize client, lead, task, and activity management in *one simple dashboard*, avoiding messy spreadsheets, WhatsApp, and emails.  
+BizSuite is a lightweight Mini CRM (Customer Relationship Management) system built with the MERN stack (MongoDB, Express.js, React.js, Node.js).
+It helps small businesses and startups centralize client, lead, task, and activity management in one simple dashboard, avoiding messy spreadsheets, WhatsApp, and emails.  
 
 ---
 
