@@ -1,7 +1,85 @@
-🚀 BizSuite – Mini CRM for Small Businesses
+## 🚀 BizSuite – Mini CRM for Small Businesses
 
-BizSuite is a lightweight Mini CRM (Customer Relationship Management) system built with the MERN stack (MongoDB, Express.js, React.js, Node.js).
-It helps small businesses and startups centralize client, lead, task, and activity management in one simple dashboard, avoiding messy spreadsheets, WhatsApp, and emails.  
+BizSuite is a lightweight Mini CRM (Customer Relationship Management) designed for small businesses & startups.
+It helps teams manage clients, leads, tasks, notes, and activities in one simple dashboard—eliminating the need for Excel sheets, WhatsApp messages, and scattered tools.
+
+Built using the MERN Stack (MongoDB, Express.js, React.js, Node.js) with clean architecture, JWT authentication, role-based access, and a modern UI.
+
+---
+
+## 🌟 Features
+
+-*🔐 Authentication & Roles*
+  -JWT Authentication
+  -Admin & Staff roles
+  -"Remember Me" login
+  -Google OAuth login (optional)
+
+👨‍💼 User Management (Admin Only)
+
+Add, edit, delete users
+
+Change role (Admin/Staff)
+
+Activate/Deactivate users
+
+👥 Client Management
+
+CRUD operations
+
+Assign clients to staff
+
+Client profile page
+
+Activity + Notes history
+
+🎯 Lead Management
+
+Full sales pipeline:
+New → Contacted → Negotiation → Won/Lost
+
+Kanban drag-and-drop board
+
+Lead profile + timeline
+
+Filter & search
+
+📝 Notes + 🕒 Activities
+
+Add notes for clients & leads
+
+Global activity timeline
+
+Filter by user/type/date
+
+📌 Tasks
+
+CRUD tasks
+
+Assign tasks to staff
+
+Mark as Completed/Pending
+
+Filter by date, status, user
+
+📊 Dashboard & Analytics
+
+Total clients, leads, tasks
+
+Conversion rate
+
+Recharts graphs (Pie/Bar/Line)
+
+Activity feed
+
+⚙️ Settings & Profile
+
+Update personal info
+Change password
+
+Upload profile picture
+
+Admin company settings
 
 ---
 
