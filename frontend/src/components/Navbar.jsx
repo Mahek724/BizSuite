@@ -32,11 +32,13 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen, isSidebarOpen, setIsSid
     user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1).toLowerCase() ||
     "Staff";
 
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
   const profilePhoto = user?.avatar
     ? user.avatar.startsWith("http")
       ? user.avatar
-      : `${API_BASE}${user.avatar.startsWith("/") ? "" : "/"}${user.avatar}`
+      : `${API_BASE}${user.avatar}`
+
     : null;
 
   // ===========================

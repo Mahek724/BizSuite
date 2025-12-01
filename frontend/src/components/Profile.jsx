@@ -6,7 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 
-const API_BASE = "http://localhost:5000/api/profile";
+// const API_BASE = "http://localhost:5000/api/profile";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_BASE = `${API_URL}/api/profile`;
+
 
 const Profile = ({ isOpen, onClose }) => {
   const { logout } = useAuth();
