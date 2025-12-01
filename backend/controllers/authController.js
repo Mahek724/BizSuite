@@ -57,6 +57,7 @@ export const signup = async (req, res) => {
         email,
         role: user.role,
         companyName: user.companyName,
+        avatar: user.avatar
       },
       token,
     });
@@ -94,6 +95,7 @@ export const login = async (req, res) => {
         email: user.email,
         role: user.role,
         companyName: user.companyName,
+        avatar: user.avatar,
       },
       token,
     });

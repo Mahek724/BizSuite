@@ -76,6 +76,7 @@
 .profile-header {
   padding: 40px 40px 20px;
   border-bottom: 1px solid #e9ecef;
+  position: relative;
 }
 
 .profile-title {
@@ -89,6 +90,34 @@
   font-size: 14px;
   color: #6b7280;
   margin: 5px 0 0;
+}
+
+/* Hamburger Button */
+.profile-hamburger-btn {
+  display: none;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.profile-hamburger-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
+  transform: scale(1.1);
+}
+
+.profile-hamburger-btn i {
+  font-size: 18px;
+  color: #333;
 }
 
 /* Profile Body */
@@ -433,7 +462,7 @@
   border-radius: 12px;
   padding: 22px;
   margin-bottom: 18px;
-  color: white;
+  color: #ac4949;
   box-shadow: 0 8px 30px rgba(195, 87, 83, 0.12);
   position: relative;
 }
@@ -471,14 +500,14 @@
 .activity-summary .stat-number {
   font-size: 28px;
   font-weight: 800;
-  color: #fff; /* white number like in screenshot */
+  color: #ad5858; /* white number like in screenshot */
   margin-bottom: 6px;
   letter-spacing: -0.5px;
 }
 
 .activity-summary .stat-label {
   font-size: 13px;
-  color: rgba(255,255,255,0.95);
+  color: #ad5858;
   font-weight: 600;
   opacity: 0.95;
 }
@@ -499,38 +528,6 @@
   }
 }
 
-/* Notification List */
-.notification-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.notification-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.notification-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.notification-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 4px;
-}
-
-.notification-desc {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0;
-}
 
 /* Toggle Switch */
 .toggle-switch {
@@ -588,8 +585,8 @@
   border: none;
   border-radius: 8px;
   font-size: 15px;
-  font-weight: 600;
-  color: white;
+  font-weight: 700;
+  color: #b93636;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -642,44 +639,94 @@
   font-size: 20px;
 }
 
+/* Mobile Sidebar Styles */
+.profile-sidebar {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.profile-sidebar.mobile-open {
+  transform: translateX(0);
+  opacity: 1;
+}
+
 /* Responsive Design */
 @media (max-width: 991px) {
   .activity-stats {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   .stat-number {
     font-size: 28px;
   }
 }
 
 @media (max-width: 768px) {
+  .profile-hamburger-btn {
+    display: flex;
+  }
+
   .profile-header {
     padding: 30px 20px 15px;
   }
-  
+
   .profile-body {
     padding: 20px;
   }
-  
+
   .profile-title {
     font-size: 24px;
   }
-  
+
   .activity-stats {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  
+
   .notification-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .profile-modal-container {
     max-height: 95vh;
     margin: 10px;
+  }
+
+  /* Hide sidebar on mobile by default */
+  .profile-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transform: translateX(-100%);
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-sidebar .profile-card {
+    width: 90%;
+    max-width: 400px;
+    margin: 0;
+  }
+
+  .profile-sidebar.mobile-open {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  /* Adjust main content on mobile */
+  .col-lg-8 {
+    width: 100%;
+  }
+
+  .col-lg-4 {
+    width: 0;
   }
 }
 
@@ -687,7 +734,7 @@
   .profile-modal-overlay {
     padding: 10px;
   }
-  
+
   .profile-close-btn {
     top: 10px;
     right: 10px;

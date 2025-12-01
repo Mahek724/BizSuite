@@ -41,11 +41,25 @@ export const getStatsSummary = async (req, res) => {
 // ─── GET All Activities ───
 export const getActivities = async (req, res) => {
   try {
+    const { page = 1, limit = 10, pinned } = req.query;
     const filter = req.user.role === "Admin" ? {} : { user: req.user._id };
+
+    // Add pinned filter if specified
+    if (pinned !== undefined) {
+      const isPinned = pinned === 'true';
+      filter.pinnedBy = isPinned ? { $in: [req.user._id] } : { $nin: [req.user._id] };
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
     const activities = await Activity.find(filter)
       .populate("user", "fullName name color email role")
       .populate("comments.user", "fullName name email role")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Activity.countDocuments(filter);
 
     const userId = req.user._id;
     const formatted = activities.map((a) => ({
@@ -61,7 +75,14 @@ export const getActivities = async (req, res) => {
       user: a.user ?? null,
     }));
 
-    res.status(200).json({ activities: formatted });
+    const pagination = {
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit)),
+      totalItems: total,
+      itemsPerPage: parseInt(limit),
+    };
+
+    res.status(200).json({ activities: formatted, pagination });
   } catch (error) {
     console.error("GET /activities error:", error);
     res.status(500).json({ message: error.message });

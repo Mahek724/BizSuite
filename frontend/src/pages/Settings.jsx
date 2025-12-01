@@ -14,6 +14,8 @@ import {
   FaFilter,
   FaTrash,
   FaChevronDown,
+  FaChevronLeft,
+  FaChevronRight,
   FaSearch,
   FaFileExport,
   FaUsers,
@@ -21,6 +23,7 @@ import {
   FaEyeSlash,
   FaClock,
   FaFileCsv,
+  FaBuilding,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -45,6 +48,8 @@ const mapServerUserToClient = (u) => {
     email: u.email,
     role: u.role || "Staff",
     status: u.status || "Active",
+    // <-- use companyName if present, otherwise company, otherwise empty string
+    company: u.companyName ?? u.company ?? "",
     avatarUrl,
     initials: fullName ? fullName.charAt(0).toUpperCase() : "?",
     color: "#C98A8A",
@@ -69,6 +74,8 @@ const getAuthHeaders = () => {
 const Settings = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]); // now loaded from server
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     role: "All Roles",
     status: "All Status",
@@ -82,6 +89,7 @@ const Settings = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 
   const [newUser, setNewUser] = useState({
@@ -89,6 +97,7 @@ const Settings = () => {
     email: "",
     role: "Staff",
     password: "",
+    company: "",
   });
 
   const [editUser, setEditUser] = useState({
@@ -96,6 +105,7 @@ const Settings = () => {
     email: "",
     role: "",
     status: "",
+    company: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -104,7 +114,7 @@ const Settings = () => {
   // compute deleting user (for modal display) — may be undefined if null
   const deletingUser = users.find((u) => u.id === showDeleteConfirm);
 
-  // Fetch users on mount
+  // Fetch users on mount and when page changes
   useEffect(() => {
   const fetchUsers = async () => {
     setLoading(true);
@@ -112,15 +122,15 @@ const Settings = () => {
     try {
       const res = await axios.get(API_BASE, {
         headers: getAuthHeaders(),
+        params: { page: currentPage, limit: 6 },
       });
 
-
-      if (Array.isArray(res.data)) {
-        setUsers(res.data.map(mapServerUserToClient));
-      } else if (res.data.users && Array.isArray(res.data.users)) {
+      if (res.data.users && Array.isArray(res.data.users)) {
         setUsers(res.data.users.map(mapServerUserToClient));
+        setTotalUsers(res.data.total);
       } else {
         setUsers([]);
+        setTotalUsers(0);
       }
     } catch (err) {
       // More detailed logging for debugging
@@ -141,7 +151,7 @@ const Settings = () => {
   };
 
   fetchUsers();
-}, []);
+}, [currentPage]);
 
 
   // Handle View Profile
@@ -152,37 +162,38 @@ const Settings = () => {
 
   // Handle Add User (calls API)
   const handleAddUser = async () => {
-    if (!newUser.name || !newUser.email || !newUser.password) {
-      alert("Please fill in all fields");
-      return;
-    }
+  if (!newUser.name || !newUser.email || !newUser.password) {
+    alert("Please fill in all fields");
+    return;
+  }
 
     try {
-      setLoading(true);
-      const payload = {
-        fullName: newUser.name,
-        email: newUser.email,
-        password: newUser.password,
-        role: newUser.role,
-      };
-      const res = await axios.post(API_BASE, payload, {
-        headers: getAuthHeaders(),
-      });
+    setLoading(true);
+    const payload = {
+      fullName: newUser.name,
+      email: newUser.email,
+      password: newUser.password,
+      role: newUser.role,
+      company: newUser.company || "", // <-- include company when creating user
+    };
+    const res = await axios.post(API_BASE, payload, {
+      headers: getAuthHeaders(),
+    });
 
       // the server responds with created user (res.data.user) or the user object directly
       const created = res.data.user || res.data;
-      const mapped = mapServerUserToClient(created);
-      setUsers((prev) => [...prev, mapped]);
+    const mapped = mapServerUserToClient(created);
+    setUsers((prev) => [...prev, mapped]);
 
-      setShowAddModal(false);
-      setNewUser({ name: "", email: "", role: "Staff", password: "" });
-    } catch (err) {
-      console.error("Failed to add user:", err);
-      alert(err?.response?.data?.message || err.message || "Failed to add user");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setShowAddModal(false);
+    setNewUser({ name: "", email: "", role: "Staff", password: "", company: "" });
+  } catch (err) {
+    console.error("Failed to add user:", err);
+    alert(err?.response?.data?.message || err.message || "Failed to add user");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Handle Edit User (open modal)
   const handleEditUser = (user) => {
@@ -192,6 +203,7 @@ const Settings = () => {
       email: user.email,
       role: user.role,
       status: user.status,
+      company: user.company,
     });
     setShowEditModal(true);
   };
@@ -208,6 +220,7 @@ const Settings = () => {
         email: editUser.email,
         role: editUser.role,
         status: editUser.status,
+        company: editUser.company,
       };
       const res = await axios.put(`${API_BASE}/${selectedUser.id}`, payload, {
         headers: getAuthHeaders(),
@@ -366,10 +379,21 @@ const handleExportAllUsers = async () => {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden w-screen">
-      <Sidebar />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
+
+      {/* Mobile Sidebar */}
+      <div className={`md:hidden fixed inset-0 z-40 ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
+        <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}></div>
+        <div className="absolute left-0 top-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out">
+          <Sidebar />
+        </div>
+      </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Navbar />
+        <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
         {/* Main Content - Full Width */}
         <div className="flex-1 overflow-y-auto bg-white">
@@ -549,6 +573,7 @@ const handleExportAllUsers = async () => {
                     <th className="py-3 px-4 text-left">User</th>
                     <th className="py-3 px-4 text-left">Role</th>
                     <th className="py-3 px-4 text-left">Status</th>
+                    <th className="py-3 px-4 text-left">Company</th>
                     <th className="py-3 px-4 text-left">Work Summary</th>
                     <th className="py-3 px-4 text-left">Join Date</th>
                     <th className="py-3 px-4 text-center">Actions</th>
@@ -620,6 +645,9 @@ const handleExportAllUsers = async () => {
                         </span>
                       </td>
 
+                      {/* Company */}
+                      <td className="py-3 px-4 text-gray-600">{user.company || "-"}</td>
+
                       {/* Work Summary */}
                       <td className="py-3 px-4">
                         <div className="text-xs space-y-0.5">
@@ -676,6 +704,31 @@ const handleExportAllUsers = async () => {
               )
             )}
           </motion.div>
+
+          {/* Pagination */}
+          {totalUsers > 6 && (
+            <div className="flex justify-center items-center gap-4 mt-6 mb-6">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-rose-200 text-rose-600 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {Math.ceil(totalUsers / 6)}
+              </span>
+              <button
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+                disabled={currentPage >= Math.ceil(totalUsers / 6)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-rose-200 text-rose-600 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+                <FaChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* User Profile Modal */}
@@ -757,6 +810,17 @@ const handleExportAllUsers = async () => {
                       </label>
                       <div className="text-base text-gray-800 border-2 border-gray-200 px-4 py-2.5 rounded-lg bg-gray-50">
                         {selectedUser.joinDate}
+                      </div>
+                    </div>
+
+                    {/* Company - added to the view/profile modal */}
+                    <div>
+                      <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                        <FaBuilding className="text-rose-400" />
+                        Company
+                      </label>
+                      <div className="text-base text-gray-800 border-2 border-gray-200 px-4 py-2.5 rounded-lg bg-gray-50">
+                        {selectedUser.company || "-"}
                       </div>
                     </div>
                   </div>
@@ -924,6 +988,20 @@ const handleExportAllUsers = async () => {
                       </button>
                     </div>
                   </div>
+
+                  {/* Company */}
+                  <div>
+                    <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                      <FaBuilding className="text-rose-400" /> Company
+                    </label>
+                    <input
+                      type="text"
+                      value={newUser.company}
+                      onChange={(e) => setNewUser({ ...newUser, company: e.target.value })}
+                      placeholder="Enter company name"
+                      className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all"
+                    />
+                  </div>
                 </div>
 
                 {/* Footer */}
@@ -1089,6 +1167,22 @@ const handleExportAllUsers = async () => {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Company */}
+          <div>
+            <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+              <FaBuilding className="text-rose-400" /> Company
+            </label>
+            <input
+              type="text"
+              value={editUser.company}
+              onChange={(e) =>
+                setEditUser({ ...editUser, company: e.target.value })
+              }
+              className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all"
+              placeholder="Enter company name"
+            />
           </div>
 
           {/* Footer */}

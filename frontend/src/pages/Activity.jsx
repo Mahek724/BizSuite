@@ -24,6 +24,7 @@ import {
   FaRupeeSign,
   FaTrash,
   FaFileCsv,
+  FaBars,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -33,8 +34,15 @@ const api = axios.create({
 const Activity = () => {
   const { user } = useAuth();
   const [activities, setActivities] = useState([]);
+  const [pinnedActivities, setPinnedActivities] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Pagination states
+  const [pinnedPagination, setPinnedPagination] = useState({ currentPage: 1, totalPages: 1 });
+  const [recentPagination, setRecentPagination] = useState({ currentPage: 1, totalPages: 1 });
 
   const [summary, setSummary] = useState({
     todayLeads: 0,
@@ -197,27 +205,16 @@ const Activity = () => {
     }
   }, [user]);
 
-  const fetchActivities = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchPinnedActivities = useCallback(async (page = 1) => {
     try {
       const token = getToken();
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await api.get("/activities", { headers });
+      const res = await api.get(`/activities?page=${page}&limit=2&pinned=true`, { headers });
 
-      const serverActivities = Array.isArray(res.data?.activities)
-        ? res.data.activities
-        : [];
-
+      const serverActivities = Array.isArray(res.data?.activities) ? res.data.activities : [];
       const normalized = serverActivities.map((a) => {
         const config = getActivityConfig(a.type);
-
-        const likesCount =
-          typeof a.likesCount === "number"
-            ? a.likesCount
-            : Array.isArray(a.likes)
-            ? a.likes.length
-            : 0;
+        const likesCount = typeof a.likesCount === "number" ? a.likesCount : Array.isArray(a.likes) ? a.likes.length : 0;
 
         return {
           id: a._id ?? a.id ?? Date.now() + Math.random(),
@@ -231,12 +228,7 @@ const Activity = () => {
           comments: Array.isArray(a.comments)
             ? a.comments.map((c) => ({
                 text: c.text ?? c,
-                user:
-                  c && typeof c.user === "object"
-                    ? { fullName: c.user.fullName || c.user.name, ...c.user }
-                    : typeof c.user === "string"
-                    ? c.user
-                    : "Unknown",
+                user: c && typeof c.user === "object" ? { fullName: c.user.fullName || c.user.name, ...c.user } : typeof c.user === "string" ? c.user : "Unknown",
               }))
             : [],
           isPinned: !!a.isPinned,
@@ -250,14 +242,65 @@ const Activity = () => {
         };
       });
 
-      setActivities(normalized);
+      setPinnedActivities(normalized);
+      setPinnedPagination(res.data.pagination || { currentPage: 1, totalPages: 1 });
     } catch (err) {
-      console.error("Failed to fetch activities:", err?.response?.data ?? err.message);
+      console.error("Failed to fetch pinned activities:", err?.response?.data ?? err.message);
+    }
+  }, [user]);
+
+  const fetchRecentActivities = useCallback(async (page = 1) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await api.get(`/activities?page=${page}&limit=3&pinned=false`, { headers });
+
+      const serverActivities = Array.isArray(res.data?.activities) ? res.data.activities : [];
+      const normalized = serverActivities.map((a) => {
+        const config = getActivityConfig(a.type);
+        const likesCount = typeof a.likesCount === "number" ? a.likesCount : Array.isArray(a.likes) ? a.likes.length : 0;
+
+        return {
+          id: a._id ?? a.id ?? Date.now() + Math.random(),
+          title: a.title ?? "",
+          description: a.description ?? "",
+          type: a.type ?? "Lead",
+          badge: a.type ?? "Lead",
+          timestamp: a.timestamp ?? a.createdAt ?? new Date().toISOString(),
+          likes: likesCount,
+          hasLiked: typeof a.isLikedByUser === "boolean" ? a.isLikedByUser : false,
+          comments: Array.isArray(a.comments)
+            ? a.comments.map((c) => ({
+                text: c.text ?? c,
+                user: c && typeof c.user === "object" ? { fullName: c.user.fullName || c.user.name, ...c.user } : typeof c.user === "string" ? c.user : "Unknown",
+              }))
+            : [],
+          isPinned: !!a.isPinned,
+          user: {
+            fullName: a.user?.fullName || a.user?.name || "Unknown",
+            name: a.user?.fullName || a.user?.name || "Unknown",
+            initials: getInitials(a.user?.fullName || a.user?.name || "U"),
+            color: a.user?.color || "#F87171",
+          },
+          ...config,
+        };
+      });
+
+      setRecentActivities(normalized);
+      setRecentPagination(res.data.pagination || { currentPage: 1, totalPages: 1 });
+    } catch (err) {
+      console.error("Failed to fetch recent activities:", err?.response?.data ?? err.message);
       setError("Failed to load activities");
     } finally {
       setLoading(false);
     }
   }, [user]);
+
+  const fetchActivities = useCallback(async () => {
+    await Promise.all([fetchPinnedActivities(), fetchRecentActivities()]);
+  }, [fetchPinnedActivities, fetchRecentActivities]);
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -295,27 +338,8 @@ const Activity = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchActivities, fetchSummary]);
 
-  const filteredActivities = activities
-    .filter((activity) => {
-      const typeMatch =
-        filters.activityType === "All Types" ||
-        activity.type === filters.activityType;
-      const userMatch =
-        filters.user === "All Staff" || activity.user.name === filters.user;
-      return typeMatch && userMatch;
-    })
-    .sort((a, b) => {
-      if (sortBy === "newest") {
-        return new Date(b.timestamp) - new Date(a.timestamp);
-      } else {
-        return new Date(a.timestamp) - new Date(b.timestamp);
-      }
-    });
-
-  // NOTE: keep pinned computed from the canonical (filtered) list by default.
-  // If you want pinned to ignore filters, change to activities.filter(...)
-  const pinnedActivities = filteredActivities.filter((a) => a.isPinned);
-  const regularActivities = filteredActivities.filter((a) => !a.isPinned);
+  // Note: Filters are not applied to pinned/recent activities as they are fetched separately.
+  // If needed, apply filters client-side or adjust API calls.
 
   const handleEditClick = (activity) => {
     setEditActivity({
@@ -406,48 +430,12 @@ const Activity = () => {
     const token = getToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    setActivities((prev) =>
-      prev.map((activity) =>
-        activity.id === activityId
-          ? {
-              ...activity,
-              likes: activity.hasLiked ? activity.likes - 1 : activity.likes + 1,
-              hasLiked: !activity.hasLiked,
-            }
-          : activity
-      )
-    );
-
     try {
-      const res = await api.patch(`/activities/${activityId}/like`, {}, { headers });
-      const updated = res.data?.activity;
-
-      if (updated) {
-        setActivities((prev) =>
-          prev.map((a) =>
-            a.id === (updated._id ?? updated.id)
-              ? {
-                  ...a,
-                  likes: updated.likesCount,
-                  hasLiked: updated.isLikedByUser,
-                }
-              : a
-          )
-        );
-      }
+      await api.patch(`/activities/${activityId}/like`, {}, { headers });
+      // Refetch both pinned and recent activities to update likes
+      await Promise.all([fetchPinnedActivities(), fetchRecentActivities()]);
     } catch (err) {
       console.error("Failed to like activity:", err?.response?.data ?? err.message);
-      setActivities((prev) =>
-        prev.map((activity) =>
-          activity.id === activityId
-            ? {
-                ...activity,
-                likes: activity.hasLiked ? activity.likes - 1 : activity.likes + 1,
-                hasLiked: !activity.hasLiked,
-              }
-            : activity
-        )
-      );
       alert("Failed to update like. Please try again.");
     }
   };
@@ -456,31 +444,12 @@ const Activity = () => {
     const token = getToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    // optimistic toggle so UI is responsive
-    setActivities((prev) =>
-      prev.map((activity) =>
-        activity.id === activityId ? { ...activity, isPinned: !activity.isPinned } : activity
-      )
-    );
-
     try {
-      const res = await api.patch(`/activities/${activityId}/pin`, {}, { headers });
-      const isPinned = res?.data?.isPinned;
-
-      if (typeof isPinned === "boolean") {
-        setActivities((prev) =>
-          prev.map((a) => (a.id === activityId ? { ...a, isPinned } : a))
-        );
-      } else {
-        await fetchActivities();
-      }
+      await api.patch(`/activities/${activityId}/pin`, {}, { headers });
+      // Refetch both pinned and recent activities since pinning moves items between lists
+      await Promise.all([fetchPinnedActivities(), fetchRecentActivities()]);
     } catch (err) {
       console.error("Failed to pin activity:", err?.response?.data ?? err.message);
-      setActivities((prev) =>
-        prev.map((activity) =>
-          activity.id === activityId ? { ...activity, isPinned: !activity.isPinned } : activity
-        )
-      );
       alert("Failed to update pin. Please try again.");
     }
   };
@@ -550,7 +519,7 @@ const Activity = () => {
 
   const todayLeads = summary.todayLeads ?? 0;
   const closedDeals = summary.closedDeals ?? 0;
-  const totalActivities = summary.totalActivities ?? activities.length;
+  const totalActivities = summary.totalActivities ?? (pinnedActivities.length + recentActivities.length);
   const tasksCompleted = summary.tasksCompleted ?? 0;
 
   // -----------------------
@@ -590,7 +559,7 @@ const Activity = () => {
   };
 
   /**
-   * Export CSV for listed activities (filteredActivities).
+   * Export CSV for recent activities.
    * Visible to Admin and Staff.
    */
   const handleExportActivities = async () => {
@@ -600,14 +569,14 @@ const Activity = () => {
       return;
     }
 
-    if (!filteredActivities || filteredActivities.length === 0) {
+    if (!recentActivities || recentActivities.length === 0) {
       alert("No activities available to export.");
       return;
     }
 
     setExporting(true);
     try {
-      const csvData = filteredActivities.map((a) => ({
+      const csvData = recentActivities.map((a) => ({
         ID: a.id ?? "",
         Type: a.type ?? "",
         Title: a.title ?? "",
@@ -639,13 +608,18 @@ const Activity = () => {
 
   return (
     <div className="flex min-h-screen w-screen bg-gray-50 overflow-hidden">
-      <aside className="sticky top-0 h-screen">
+      <aside className="hidden md:block sticky top-0 h-screen">
         <Sidebar />
       </aside>
 
+      {/* Mobile Sidebar */}
+      <div className="md:hidden">
+        <Sidebar isSidebarOpen={isMobileMenuOpen} />
+      </div>
+
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <div className="sticky top-0 z-50 bg-white shadow-sm">
-          <Navbar />
+          <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -1042,6 +1016,39 @@ const Activity = () => {
                     })}
                   </div>
 
+                  {/* Pinned Pagination */}
+                  {pinnedPagination.totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-6">
+                      <button
+                        onClick={() => fetchPinnedActivities(pinnedPagination.currentPage - 1)}
+                        disabled={pinnedPagination.currentPage === 1}
+                        className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        Previous
+                      </button>
+                      {Array.from({ length: pinnedPagination.totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => fetchPinnedActivities(page)}
+                          className={`px-3 py-2 border rounded-lg text-sm font-medium transition-all ${
+                            page === pinnedPagination.currentPage
+                              ? "bg-rose-500 text-white border-rose-500"
+                              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => fetchPinnedActivities(pinnedPagination.currentPage + 1)}
+                        disabled={pinnedPagination.currentPage === pinnedPagination.totalPages}
+                        className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+
                   <hr className="my-6 border-gray-200" />
                 </section>
               )}
@@ -1055,7 +1062,7 @@ const Activity = () => {
               )}
 
               <div className="space-y-4">
-                {regularActivities.map((activity, index) => {
+                {recentActivities.map((activity, index) => {
                   const Icon = activity.icon;
                   return (
                     <motion.div key={activity.id} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
@@ -1075,7 +1082,40 @@ const Activity = () => {
                 })}
               </div>
 
-              {filteredActivities.length === 0 && !loading && (
+              {/* Recent Pagination */}
+              {recentPagination.totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  <button
+                    onClick={() => fetchRecentActivities(recentPagination.currentPage - 1)}
+                    disabled={recentPagination.currentPage === 1}
+                    className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: recentPagination.totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => fetchRecentActivities(page)}
+                      className={`px-3 py-2 border rounded-lg text-sm font-medium transition-all ${
+                        page === recentPagination.currentPage
+                          ? "bg-rose-500 text-white border-rose-500"
+                          : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => fetchRecentActivities(recentPagination.currentPage + 1)}
+                    disabled={recentPagination.currentPage === recentPagination.totalPages}
+                    className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+
+              {recentActivities.length === 0 && !loading && (
                 <div className="text-center py-12">
                   <div className="w-24 h-24 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                     <FaTasks className="w-12 h-12 text-gray-400" />

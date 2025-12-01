@@ -18,6 +18,7 @@ import {
   FaTag,
   FaStickyNote,
   FaFileCsv,
+  FaBars,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -39,6 +40,17 @@ const Notes = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [error, setError] = useState("");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Pagination states
+  const [pinnedNotes, setPinnedNotes] = useState([]);
+  const [unpinnedNotes, setUnpinnedNotes] = useState([]);
+  const [pinnedPagination, setPinnedPagination] = useState(null);
+  const [unpinnedPagination, setUnpinnedPagination] = useState(null);
+  const [pinnedPage, setPinnedPage] = useState(1);
+  const [unpinnedPage, setUnpinnedPage] = useState(1);
 
   const [filters, setFilters] = useState({
     category: "All Categories",
@@ -55,26 +67,59 @@ const Notes = () => {
     "Development",
   ];
 
+  // Fetch pinned notes with pagination
+  const fetchPinnedNotes = async (page = 1) => {
+    try {
+      const { data } = await api.get(`/notes/pinned?page=${page}&limit=4`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPinnedNotes(data.notes);
+      setPinnedPagination(data.pagination);
+    } catch (err) {
+      console.error("Error fetching pinned notes:", err.response?.data || err.message);
+    }
+  };
+
+  // Fetch unpinned notes with pagination
+  const fetchUnpinnedNotes = async (page = 1) => {
+    try {
+      const { data } = await api.get(`/notes/unpinned?page=${page}&limit=4`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUnpinnedNotes(data.notes);
+      setUnpinnedPagination(data.pagination);
+    } catch (err) {
+      console.error("Error fetching unpinned notes:", err.response?.data || err.message);
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
-    const fetchNotes = async () => {
-      try {
-        const { data } = await api.get("/notes", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setNotes(data);
-      } catch (err) {
-        console.error("Error fetching notes:", err.response?.data || err.message);
-      } finally {
-        setLoading(false);
-      }
+    const fetchAllNotes = async () => {
+      await Promise.all([
+        fetchPinnedNotes(1),
+        fetchUnpinnedNotes(1)
+      ]);
+      setLoading(false);
     };
 
-    fetchNotes(); // initial fetch
+    fetchAllNotes(); // initial fetch
 
-    const interval = setInterval(fetchNotes, 30000); // refresh every 30 seconds
+    const interval = setInterval(fetchAllNotes, 30000); // refresh every 30 seconds
     return () => clearInterval(interval);
   }, [token]);
+
+  // Handle window resize for responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width <= 768);
+      setIsSidebarOpen(width > 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const sortOptions = ["Recent", "Oldest", "A-Z", "Z-A"];
 
@@ -168,10 +213,24 @@ const Notes = () => {
       const res = await api.patch(`/notes/${noteId}/pin`, {}, {
         headers: {Authorization: `Bearer ${token}` },
       });
-      setNotes(notes.map((n) => (n._id === noteId ? res.data : n)));
+      // Refresh both lists after pin toggle
+      await Promise.all([
+        fetchPinnedNotes(1),
+        fetchUnpinnedNotes(1)
+      ]);
     } catch (err) {
       console.error("Error toggling pin:", err);
     }
+  };
+
+  const handlePinnedPageChange = (page) => {
+    setPinnedPage(page);
+    fetchPinnedNotes(page);
+  };
+
+  const handleUnpinnedPageChange = (page) => {
+    setUnpinnedPage(page);
+    fetchUnpinnedNotes(page);
   };
 
   const closeModal = () => {
@@ -221,8 +280,7 @@ const Notes = () => {
     return [...list].sort((a, b) => b.title.localeCompare(a.title));
   };
 
-  const pinnedNotes = sortNotes(filteredNotes.filter(n => n.pinnedBy?.includes(user?.id)));
-  const unpinnedNotes = sortNotes(filteredNotes.filter(n => !n.pinnedBy?.includes(user?.id)));
+  
 
   // -----------------------
   // CSV Export helpers
@@ -295,7 +353,7 @@ const Notes = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50 overflow-hidden w-screen">
-      <Sidebar />
+      <Sidebar isSidebarOpen={isSidebarOpen} />
 
       <div className="flex-1 overflow-hidden">
         <Navbar />
@@ -526,6 +584,31 @@ const Notes = () => {
                   </motion.div>
                 ))}
               </div>
+
+              {/* Pinned Notes Pagination */}
+              {pinnedPagination && pinnedPagination.totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-6">
+                  <button
+                    onClick={() => handlePinnedPageChange(pinnedPage - 1)}
+                    disabled={pinnedPage === 1}
+                    className="px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Previous
+                  </button>
+
+                  <span className="text-sm text-gray-600">
+                    Page {pinnedPage} of {pinnedPagination.totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => handlePinnedPageChange(pinnedPage + 1)}
+                    disabled={pinnedPage === pinnedPagination.totalPages}
+                    className="px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -594,6 +677,31 @@ const Notes = () => {
                 </motion.div>
               ))}
             </div>
+
+            {/* Unpinned Notes Pagination */}
+            {unpinnedPagination && unpinnedPagination.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-6">
+                <button
+                  onClick={() => handleUnpinnedPageChange(unpinnedPage - 1)}
+                  disabled={unpinnedPage === 1}
+                  className="px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  Previous
+                </button>
+
+                <span className="text-sm text-gray-600">
+                  Page {unpinnedPage} of {unpinnedPagination.totalPages}
+                </span>
+
+                <button
+                  onClick={() => handleUnpinnedPageChange(unpinnedPage + 1)}
+                  disabled={unpinnedPage === unpinnedPagination.totalPages}
+                  className="px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>

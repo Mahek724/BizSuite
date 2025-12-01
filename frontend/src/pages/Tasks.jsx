@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import axios from "axios";
-import { useAuth } from "../context/AuthContext"; 
+import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaPlus,
@@ -24,6 +24,7 @@ import {
   FaCheckCircle,
   FaRegCircle,
   FaFileCsv,
+  FaBars,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -35,6 +36,14 @@ const api = axios.create({
   const { user } = useAuth();
   const isAdmin = user?.role?.toLowerCase() === "admin";
   const [tasks, setTasks] = useState([]);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalTasks: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+    limit: 8
+  });
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -45,6 +54,10 @@ const api = axios.create({
   const [error, setError] = useState("");
   const [staffOptions, setStaffOptions] = useState(["All Staff"]);
   const [exporting, setExporting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 
   const [filters, setFilters] = useState({
@@ -111,6 +124,17 @@ useEffect(() => {
   if (user?.role) fetchStaff();
 }, [user]);
 
+useEffect(() => {
+  const handleResize = () => {
+    const width = window.innerWidth;
+    setIsMobile(width <= 768);
+    setIsSidebarOpen(width > 768);
+  };
+
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+
 
 
 
@@ -130,6 +154,7 @@ useEffect(() => {
   useEffect(() => {
   const fetchTasks = async () => {
     try {
+      setLoading(true);
       const token =
         localStorage.getItem("token") ||
         sessionStorage.getItem("token") ||
@@ -137,33 +162,30 @@ useEffect(() => {
 
       if (!token) return console.warn("⚠️ Missing token");
 
-      const res = await api.get("/tasks", {
+      const res = await api.get(`/tasks?page=${pagination.currentPage}&limit=${pagination.limit}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      let fetchedTasks = res.data;
+      const fetchedTasks = res.data.tasks;
+      const paginationData = res.data.pagination;
 
-      // Filter tasks dynamically by user role
-      if (user?.role?.toLowerCase() === "staff") {
-        fetchedTasks = fetchedTasks.filter(
-          (t) => t.assignedTo === user.fullName
-        );
-      }
-
-      // Remove duplicates by ID
+      // Remove duplicates by ID (though backend should handle this)
       const uniqueTasks = fetchedTasks.filter(
         (task, index, self) =>
           index === self.findIndex((t) => t._id === task._id)
       );
 
       setTasks(uniqueTasks);
+      setPagination(paginationData);
     } catch (err) {
       console.error("❌ Failed to fetch tasks:", err.response?.data || err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   if (user?.role) fetchTasks();
-}, [user]);
+}, [user, pagination.currentPage, pagination.limit]);
 
 
 
@@ -386,13 +408,26 @@ useEffect(() => {
    return (
   <div className="flex min-h-screen bg-gray-50 w-screen">
     {/* Sidebar */}
-    <Sidebar />
+    <Sidebar isSidebarOpen={isSidebarOpen} />
+
+    {/* Backdrop for mobile sidebar */}
+    {isMobile && isSidebarOpen && (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+        onClick={() => setIsSidebarOpen(false)}
+      />
+    )}
 
     {/* Main Content Area */}
     <div className="flex-1 flex flex-col h-screen overflow-hidden">
       {/* Navbar */}
       <div className="sticky top-0 z-50 bg-white shadow-md">
-        <Navbar />
+        <Navbar
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+        />
       </div>
 
       {/* Page Content */}
@@ -645,7 +680,6 @@ useEffect(() => {
                         show: { opacity: 1, y: 0 },
                       }}
                     >
-                      {/* ✅ Title + Checkbox */}
                       {/* ✅ Title + Checkbox (updated to reduce title size and constrain width) */}
 <td className="py-3 px-4">
   <div className="flex items-start gap-3">
@@ -765,6 +799,36 @@ useEffect(() => {
               <div className="p-12 text-center text-gray-500">No tasks found</div>
             )}
           </motion.div>
+
+          {/* Pagination Controls */}
+          {pagination.totalPages > 1 && (
+            <motion.div
+              className="flex justify-center items-center gap-4 mt-6 mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }))}
+                disabled={!pagination.hasPrevPage}
+                className="px-4 py-2 bg-white border border-rose-200 text-rose-600 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+
+              <span className="text-sm text-gray-600 font-medium">
+                Page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalTasks} tasks)
+              </span>
+
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
+                disabled={!pagination.hasNextPage}
+                className="px-4 py-2 bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </motion.div>
+          )}
         </div>
       </div>
 

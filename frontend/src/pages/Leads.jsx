@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
+import { useSearch } from "../context/SearchContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaPlus,
@@ -12,7 +13,7 @@ import {
   FaTrash,
   FaFilter,
   FaBuilding,
-  FaDollarSign,
+  FaRupeeSign,
   FaShareAlt,
   FaBullhorn,
   FaFlag,
@@ -35,7 +36,9 @@ const api = axios.create({
 
 const Leads = () => {
   const { user } = useAuth();
-  
+  const { searchQuery, setSearchQuery } = useSearch();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const token = localStorage.getItem("token"); // adjust if token comes from context
   const isAdmin = (user?.role || localStorage.getItem("role") || "")
     .toString()
@@ -52,6 +55,15 @@ const Leads = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Debounce search query to improve performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -76,7 +88,7 @@ const Leads = () => {
     name: "",
     email: "",
     company: "",
-    value: 0,
+    value: "",
     stage: "New",
     source: "Website",
     assignedTo: "",
@@ -162,7 +174,7 @@ const Leads = () => {
       name: "",
       email: "",
       company: "",
-      value: 0,
+      value: "",
       stage: "New",
       source: sources.length > 1 ? sources[1] : "Website",
       assignedTo: isAdmin ? "" : user?.fullName || "",
@@ -267,7 +279,7 @@ const Leads = () => {
       name: lead.name || "",
       email: lead.email || "",
       company: lead.company || "",
-      value: lead.value || 0,
+      value: lead.value?.toString() || "",
       stage: lead.stage || "New",
       source: lead.source || (sources[1] || "Website"),
       assignedTo: lead.assignedTo || (isAdmin ? "" : user?.fullName || ""),
@@ -315,7 +327,10 @@ const Leads = () => {
     const stageMatch = filters.stage === "All Stages" || lead.stage === filters.stage;
     const sourceMatch = filters.source === "All Sources" || lead.source === filters.source;
     const staffMatch = filters.staff === "All Staff" || lead.assignedTo === filters.staff;
-    return stageMatch && sourceMatch && staffMatch;
+    const searchMatch = !debouncedSearchQuery || [lead.name, lead.email, lead.company, lead.assignedTo].some(field =>
+      field?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    );
+    return stageMatch && sourceMatch && staffMatch && searchMatch;
   });
 
   const getStageCount = (stage) => getLeadsByStage(stage).length;
@@ -423,17 +438,25 @@ const Leads = () => {
   };
 
   return (
-  <div className="flex min-h-screen w-screen bg-gray-50 overflow-hidden">
-    {/* Sidebar - sticky on the left */}
-    <aside className="sticky top-0 h-screen">
+  <div className="min-h-screen w-screen bg-gray-50 overflow-hidden md:flex">
+    {/* Desktop Sidebar */}
+    <div className="hidden md:block">
       <Sidebar />
-    </aside>
+    </div>
+
+    {/* Mobile Sidebar */}
+    <div className={`md:hidden fixed inset-0 z-40 ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}></div>
+      <div className="absolute left-0 top-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out">
+        <Sidebar isSidebarOpen={isMobileMenuOpen} />
+      </div>
+    </div>
 
     {/* Main Section */}
     <div className="flex-1 flex flex-col h-screen overflow-hidden">
       {/* Navbar - sticky at the top */}
       <div className="sticky top-0 z-50 bg-white shadow-sm">
-        <Navbar />
+        <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       </div>
  <div className="flex-1 overflow-y-auto p-6">
           {/* Header Section */}
@@ -690,7 +713,7 @@ const Leads = () => {
                                   <span className="truncate">{lead.email}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <FaDollarSign className="text-rose-400 w-3 h-3 flex-shrink-0" />
+                                  <FaRupeeSign className="text-rose-400 w-3 h-3 flex-shrink-0" />
                                   <span>${(lead.value || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -800,7 +823,7 @@ const Leads = () => {
 
                               <td className="py-3 px-4">
                                 <div className="flex items-center gap-2">
-                                  <FaDollarSign className="text-rose-400" />
+                                  <FaRupeeSign className="text-rose-400" />
                                   ${(lead.value || 0).toLocaleString()}
                                 </div>
                               </td>
@@ -881,7 +904,7 @@ const Leads = () => {
                         { field: "name", label: "Lead Name", icon: <FaUser className="text-rose-400" /> },
                         { field: "email", label: "Email", icon: <FaEnvelope className="text-rose-400" /> },
                         { field: "company", label: "Company", icon: <FaBuilding className="text-rose-400" /> },
-                        { field: "value", label: "Value", icon: <FaDollarSign className="text-rose-400" />, type: "number" },
+                        { field: "value", label: "Value", icon: <FaRupeeSign className="text-rose-400" />, type: "number" },
                       ].map(({ field, label, icon, type }, idx) => (
                         <div key={idx}>
                           <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
@@ -892,7 +915,15 @@ const Leads = () => {
                             type={type || "text"}
                             className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all"
                             value={formData[field]}
-                            onChange={(e) => setFormData({ ...formData, [field]: type === "number" ? Number(e.target.value) : e.target.value })}
+                            onChange={(e) =>
+  setFormData({
+    ...formData,
+    [field]:
+      type === "number"
+        ? e.target.value.replace(/^0+/, "")
+        : e.target.value,
+  })
+}
                             placeholder={`Enter ${label.toLowerCase()}`}
                           />
                         </div>
@@ -1026,7 +1057,7 @@ const Leads = () => {
                         { field: "name", label: "Lead Name", icon: <FaUser className="text-rose-400" /> },
                         { field: "email", label: "Email", icon: <FaEnvelope className="text-rose-400" /> },
                         { field: "company", label: "Company", icon: <FaBuilding className="text-rose-400" /> },
-                        { field: "value", label: "Value", icon: <FaDollarSign className="text-rose-400" />, type: "number" },
+                        { field: "value", label: "Value", icon: <FaRupeeSign className="text-rose-400" />, type: "number" },
                       ].map(({ field, label, icon, type }, idx) => (
                         <div key={idx}>
                           <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
@@ -1176,7 +1207,7 @@ const Leads = () => {
                       { label: "Lead Name", value: selectedLead.name, icon: <FaUser className="text-rose-400" /> },
                       { label: "Email", value: selectedLead.email, icon: <FaEnvelope className="text-rose-400" /> },
                       { label: "Company", value: selectedLead.company, icon: <FaBuilding className="text-rose-400" /> },
-                      { label: "Value", value: `$${(selectedLead.value || 0).toLocaleString()}`, icon: <FaDollarSign className="text-rose-400" /> },
+                      { label: "Value", value: `$${(selectedLead.value || 0).toLocaleString()}`, icon: <FaRupeeSign className="text-rose-400" /> },
                       { label: "Stage", value: selectedLead.stage, icon: <FaLayerGroup className="text-rose-400" /> },
                       { label: "Source", value: selectedLead.source, icon: <FaLink className="text-rose-400" /> },
                       { label: "Created At", value: formatDate(selectedLead.createdAt || selectedLead.created_at), icon: <FaCalendarAlt className="text-rose-400" /> },

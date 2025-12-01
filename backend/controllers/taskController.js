@@ -6,11 +6,43 @@ import { sendNotification } from "../utils/sendNotification.js";
    📌 TASK CONTROLLER
 ============================ */
 
-// Get all tasks
+// Get all tasks with pagination
 export const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
-    res.status(200).json(tasks);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+    const userRole = req.user?.role?.toLowerCase();
+
+    // Filter tasks based on user role
+    if (userRole === "staff") {
+      query.assignedTo = req.user.fullName;
+    }
+
+    // Get total count for pagination based on filtered query
+    const totalTasks = await Task.countDocuments(query);
+
+    // Get paginated tasks
+    const tasks = await Task.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalPages = Math.ceil(totalTasks / limit);
+
+    res.status(200).json({
+      tasks,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalTasks,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        limit
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch tasks", error });
   }

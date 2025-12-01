@@ -153,12 +153,18 @@ export const getSalesTrend = async (req, res) => {
 // GET → Recent Activity timeline
 export const getRecentActivity = async (req, res) => {
   try {
+    const { page = 1, limit = 6 } = req.query; // default 6 items per page
+    const skip = (page - 1) * limit;
+
     const filter = req.user.role === "Admin" ? {} : { user: req.user._id };
+
+    const total = await Activity.countDocuments(filter);
 
     const activities = await Activity.find(filter)
       .populate("user", "fullName")
       .sort({ createdAt: -1 })
-      .limit(6)
+      .skip(skip)
+      .limit(Number(limit))
       .lean();
 
     const recent = activities.map((a) => ({
@@ -168,8 +174,14 @@ export const getRecentActivity = async (req, res) => {
       time: a.createdAt,
     }));
 
-    res.json(recent);
+    res.json({
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / limit),
+      recent,
+    });
   } catch (err) {
     res.status(500).json({ message: "Error fetching activity", error: err.message });
   }
 };
+

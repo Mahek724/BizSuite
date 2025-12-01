@@ -11,6 +11,7 @@ const API_BASE = "http://localhost:5000/api/profile";
 const Profile = ({ isOpen, onClose }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+
   const [profileData, setProfileData] = useState(null);
   const [activityStats, setActivityStats] = useState({
     leadsHandled: 0,
@@ -40,6 +41,9 @@ const Profile = ({ isOpen, onClose }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [changeLoading, setChangeLoading] = useState(false);
   const [changeError, setChangeError] = useState("");
+
+  // Mobile sidebar toggle
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // date formatting helpers
   const formatYear = (isoOrDate) => {
@@ -267,6 +271,12 @@ const Profile = ({ isOpen, onClose }) => {
         </button>
 
         <div className="profile-header">
+          <button
+            className="profile-hamburger-btn"
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          >
+            <i className="bi bi-list"></i>
+          </button>
           <h2 className="profile-title">My Profile</h2>
           <p className="profile-subtitle">Manage your account settings and preferences</p>
         </div>
@@ -275,7 +285,7 @@ const Profile = ({ isOpen, onClose }) => {
           <div className="row g-4">
             {/* LEFT SIDEBAR */}
             <div className="col-lg-4">
-              <div className="profile-card profile-sidebar">
+              <div className={`profile-card profile-sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
                 <div className="profile-avatar-section">
                   <div className="profile-avatar-wrapper">
                     {profileData.avatar ? (
@@ -493,29 +503,6 @@ const Profile = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Notification Preferences */}
-              <div className="profile-card mb-4">
-                <div className="card-header-title mb-3">
-                  <i className="bi bi-bell"></i>
-                  <h4>Notification Preferences</h4>
-                </div>
-
-                {Object.keys(notifications).map((key) => (
-                  <div key={key} className="notification-item">
-                    <div>
-                      <h5 className="notification-title">{key.replace(/([A-Z])/g, " $1")}</h5>
-                    </div>
-                    <label className="toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={notifications[key]}
-                        onChange={() => toggleNotification(key)}
-                      />
-                      <span className="toggle-slider"></span>
-                    </label>
-                  </div>
-                ))}
-              </div>
 
               <button className="logout-btn" onClick={handleLogout}>
                 <i className="bi bi-box-arrow-right"></i> Logout

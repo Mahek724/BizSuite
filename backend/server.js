@@ -73,7 +73,6 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai-summary", aiSummaryRoute);
 
-
 // ✅ Health check (for Render)
 app.get("/_health", (_req, res) => res.json({ ok: true }));
 

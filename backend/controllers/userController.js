@@ -9,10 +9,16 @@ import { sendNotification } from "../utils/sendNotification.js";
    📌 USER CONTROLLER
 ============================ */
 
-// Get all users (Admin only) with dynamic workSummary
+// Get all users (Admin only) with dynamic workSummary and pagination
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-passwordHash").lean();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 6;
+    const skip = (page - 1) * limit;
+
+    const total = await User.countDocuments();
+    // .lean() to get plain objects that we can modify
+    const users = await User.find().select("-passwordHash").skip(skip).limit(limit).lean();
 
     const usersWithSummary = await Promise.all(
       users.map(async (user) => {
@@ -22,8 +28,12 @@ export const getAllUsers = async (req, res) => {
           Client.countDocuments({ assignedTo: user._id }),
         ]);
 
+        // normalize company field so frontends have a consistent `company` property
+        const company = user.companyName ?? user.company ?? "";
+
         return {
           ...user,
+          company, // explicit company prop (uses companyName if that's what is stored)
           workSummary: {
             leads: leadCount,
             tasks: taskCount,
@@ -33,7 +43,7 @@ export const getAllUsers = async (req, res) => {
       })
     );
 
-    res.status(200).json(usersWithSummary);
+    res.status(200).json({ users: usersWithSummary, total });
   } catch (err) {
     console.error("Error fetching users with summary:", err);
     res.status(500).json({ message: "Error fetching users", error: err.message });
@@ -43,7 +53,7 @@ export const getAllUsers = async (req, res) => {
 // Add new user (Admin)
 export const addUser = async (req, res) => {
   try {
-    const { fullName, email, password, role } = req.body;
+    const { fullName, email, password, role, company } = req.body;
 
     if (!fullName || !email || !password)
       return res.status(400).json({ message: "Missing required fields" });
@@ -58,6 +68,7 @@ export const addUser = async (req, res) => {
       email,
       passwordHash: hashed,
       role: role || "Staff",
+      companyName: company || "",
     });
 
     const admins = await User.find({ role: "Admin", _id: { $ne: req.user._id } });
@@ -82,11 +93,11 @@ export const addUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fullName, email, role, status } = req.body;
+    const { fullName, email, role, status, company } = req.body;
 
     const updated = await User.findByIdAndUpdate(
       id,
-      { fullName, email, role, status },
+      { fullName, email, role, status, companyName: company },
       { new: true }
     ).select("-passwordHash");
 

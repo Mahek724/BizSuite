@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const Sidebar = () => {
+const Sidebar = ({ isSidebarOpen }) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,8 +40,9 @@ const Sidebar = () => {
 
   return (
     <aside
-      className="sticky top-0 left-0 h-screen w-64 bg-rose-300 text-white flex flex-col p-5 shadow-lg z-40"
-      style={{ position: "sticky" }}
+      className={`h-screen w-64 bg-rose-300 text-white flex flex-col p-5 shadow-lg fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}
     >
       {/* Logo Section */}
       <div className="mb-10">

@@ -11,7 +11,7 @@ import {
 const router = express.Router();
 
 // Routes
-router.get("/", getAllTasks);
+router.get("/", authenticate, getAllTasks);
 router.get("/:id", getTaskById);
 router.post("/", authenticate, createTask);
 router.put("/:id", authenticate, updateTask);

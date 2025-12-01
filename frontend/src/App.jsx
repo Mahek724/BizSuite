@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import { SearchProvider } from "./context/SearchContext";
 import AuthPage from "./pages/AuthPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -19,7 +20,8 @@ export function App() {
   const isAdmin = !!user && String(user.role || "").toLowerCase() === "admin";
 
   return (
-    <Routes>
+    <SearchProvider>
+      <Routes>
       {!user && (
         <>
           <Route path="/*" element={<AuthPage />} />
@@ -52,7 +54,8 @@ export function App() {
           />
         </>
       )}
-    </Routes>
+      </Routes>
+    </SearchProvider>
   );
 }
 

@@ -22,6 +22,7 @@ import {
   FaTag,
   FaBuilding,
   FaChevronDown,
+  FaBars,
 } from "react-icons/fa";
 
 const api = axios.create({
@@ -31,7 +32,7 @@ const api = axios.create({
 const Clients = () => {
   const { user } = useAuth();
   const [clients, setClients] = useState([]);
-  const [staffList, setStaffList] = useState([]); 
+  const [staffList, setStaffList] = useState([]);
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -43,6 +44,18 @@ const Clients = () => {
   const [filterTag, setFilterTag] = useState("All Tags");
   const [viewMode, setViewMode] = useState("kanban");
   const [isAssignDropdownOpen, setIsAssignDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalClients, setTotalClients] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [hasPrevPage, setHasPrevPage] = useState(false);
+  const itemsPerPage = 8; // Match backend default
 
   const validateForm = () => {
     if (!selectedClient.name.trim()) return "Name is required";
@@ -66,14 +79,46 @@ const Clients = () => {
     }
   }, [isAddFormOpen, isEditFormOpen]);
 
-  // When fetching clients, also populate assignedTo with staff info
+  // Fetch clients with pagination and filtering
+  const fetchClients = async (page = currentPage, search = searchTerm, tag = filterTag) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        search: search.trim(),
+        tag: tag
+      });
+
+      const res = await api.get(`/clients?${params}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+
+      setClients(res.data.clients);
+      setTotalClients(res.data.total);
+      setTotalPages(res.data.totalPages);
+      setCurrentPage(res.data.page);
+      setHasNextPage(res.data.hasNextPage);
+      setHasPrevPage(res.data.hasPrevPage);
+    } catch (err) {
+      setError("Failed to fetch clients");
+      setClients([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load and when filters change
   useEffect(() => {
-    api.get("/clients", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    })
-      .then(res => setClients(res.data.clients))
-      .catch(() => setClients([]));
-  }, []);
+    fetchClients(1, searchTerm, filterTag);
+  }, [searchTerm, filterTag]);
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchClients(newPage, searchTerm, filterTag);
+    }
+  };
 
   const handleAddClient = () => {
     setIsAddFormOpen(true);
@@ -107,11 +152,8 @@ const Clients = () => {
         });
         setIsAddFormOpen(false);
       }
-      // Reload clients after save
-      const res = await api.get("/clients", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setClients(res.data.clients);
+      // Reload current page after save
+      fetchClients(currentPage, searchTerm, filterTag);
       setSelectedClient(null);
       setError("");
     } catch (err) {
@@ -152,10 +194,8 @@ const Clients = () => {
       await api.delete(`/clients/${deleteConfirm._id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      const res = await api.get("/clients", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setClients(res.data.clients);
+      // Reload current page after delete
+      fetchClients(currentPage, searchTerm, filterTag);
       setDeleteConfirm(null);
     } catch (err) {
       setError("Failed to delete client.");
@@ -246,15 +286,22 @@ const Clients = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 w-screen">
-      {/* Sidebar */}
-      <Sidebar />
+    <div className="flex min-h-screen bg-gray-50 overflow-hidden w-screen">
+      <Sidebar isSidebarOpen={isSidebarOpen} />
+
+      {/* Backdrop for mobile sidebar */}
+      {isMobile && isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Navbar */}
         <div className="sticky top-0 z-50 bg-white shadow-md">
-          <Navbar />
+          <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
         </div>
 
         {/* Page Content */}
@@ -408,8 +455,8 @@ const Clients = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 >
-                  {filteredClients.length > 0 ? (
-                    filteredClients.map((client, index) => (
+                  {clients.length > 0 ? (
+                    clients.map((client, index) => (
                       <motion.div
                         key={client.id || client._id}
                         className="bg-white/80 backdrop-blur-sm rounded-2xl border border-rose-100 p-4 flex flex-col justify-between shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
@@ -511,7 +558,7 @@ const Clients = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 >
-                  {filteredClients.length > 0 ? (
+                  {clients.length > 0 ? (
                     <motion.table
                       className="w-full text-sm text-gray-700"
                       initial="hidden"
@@ -532,7 +579,7 @@ const Clients = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredClients.map((client) => (
+                        {clients.map((client) => (
                           <motion.tr
                             key={client.id || client._id}
                             className="border-b border-gray-100 hover:bg-rose-50 transition-all"
@@ -616,9 +663,38 @@ const Clients = () => {
             </AnimatePresence>
           </div>
 
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-6 mb-6">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={!hasPrevPage}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  hasPrevPage
+                    ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white hover:from-rose-500 hover:to-rose-600 shadow-md hover:shadow-lg"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
+              >
+                Previous
+              </button>
 
+              <span className="text-sm font-medium text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
 
-
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!hasNextPage}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  hasNextPage
+                    ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white hover:from-rose-500 hover:to-rose-600 shadow-md hover:shadow-lg"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          )}
 
           {/* Add/Edit Modal */}
 

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
-import { FaRegBell, FaTimes } from "react-icons/fa";
+import { FaRegBell, FaTimes, FaBars } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
+import { useSearch } from "../context/SearchContext";
 import axios from "axios";
 import Profile from "./Profile";
 
-const Navbar = () => {
+const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen, isSidebarOpen, setIsSidebarOpen }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const { searchQuery, setSearchQuery } = useSearch();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [openNotif, setOpenNotif] = useState(false);
@@ -89,13 +91,24 @@ const Navbar = () => {
   return (
     <>
       <header className="sticky top-0 z-50 flex items-center justify-between bg-white border-b px-6 py-3 shadow-sm">
+        {/* Hamburger Button for Mobile */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          aria-label="Toggle mobile menu"
+        >
+          <FaBars className="text-gray-700" size={20} />
+        </button>
+
         <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
 
         <div className="flex-1 flex justify-center">
           <div className="relative w-full max-w-md">
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search leads, clients, projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pr-10 pl-3 text-sm font-semibold border border-gray-300 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
             <Search

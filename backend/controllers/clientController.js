@@ -2,19 +2,54 @@ import Client from "../models/Client.js";
 import User from "../models/User.js";
 import { sendNotification } from "../utils/sendNotification.js";
 
-// Get all clients
+// Get all clients with pagination and filtering
 export const getClients = async (req, res) => {
   try {
-    let clients;
-    if (req.user.role === "Admin") {
-      clients = await Client.find().populate("assignedTo", "fullName email");
-    } else {
-      clients = await Client.find({ assignedTo: req.user._id }).populate(
-        "assignedTo",
-        "fullName email"
-      );
+    const { page = 1, limit = 8, search = "", tag = "All Tags" } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Build filter query
+    let filterQuery = {};
+    if (req.user.role !== "Admin") {
+      filterQuery.assignedTo = req.user._id;
     }
-    res.json({ clients });
+
+    // Add search filter
+    if (search) {
+      filterQuery.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { company: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    // Add tag filter
+    if (tag && tag !== "All Tags") {
+      filterQuery.tags = { $in: [tag] };
+    }
+
+    // Get total count for pagination
+    const total = await Client.countDocuments(filterQuery);
+
+    // Get paginated clients
+    const clients = await Client.find(filterQuery)
+      .populate("assignedTo", "fullName email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    const totalPages = Math.ceil(total / limitNum);
+
+    res.json({
+      clients,
+      total,
+      page: pageNum,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1
+    });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch clients" });
   }
