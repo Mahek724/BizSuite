@@ -4,7 +4,7 @@ import Notification from "../models/Notification.js";
 export const sendNotification = async ({
   sender,
   receiver,
-  receivers = [], // array of users
+  receivers = [], 
   type,
   message,
   relatedId,

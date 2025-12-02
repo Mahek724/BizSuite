@@ -5,11 +5,7 @@ import Task from "../models/Task.js";
 import Client from "../models/Client.js";
 import { sendNotification } from "../utils/sendNotification.js";
 
-/* ============================
-   📌 USER CONTROLLER
-============================ */
-
-// Get all users (Admin only) with dynamic workSummary and pagination
+// Get all users
 export const getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -17,7 +13,6 @@ export const getAllUsers = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const total = await User.countDocuments();
-    // .lean() to get plain objects that we can modify
     const users = await User.find().select("-passwordHash").skip(skip).limit(limit).lean();
 
     const usersWithSummary = await Promise.all(
@@ -27,13 +22,11 @@ export const getAllUsers = async (req, res) => {
           Task.countDocuments({ assignedTo: user.fullName }),
           Client.countDocuments({ assignedTo: user._id }),
         ]);
-
-        // normalize company field so frontends have a consistent `company` property
         const company = user.companyName ?? user.company ?? "";
 
         return {
           ...user,
-          company, // explicit company prop (uses companyName if that's what is stored)
+          company, 
           workSummary: {
             leads: leadCount,
             tasks: taskCount,
@@ -50,7 +43,7 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// Add new user (Admin)
+// Add new user
 export const addUser = async (req, res) => {
   try {
     const { fullName, email, password, role, company } = req.body;
@@ -89,7 +82,7 @@ export const addUser = async (req, res) => {
   }
 };
 
-// Update user (Admin)
+// Update user 
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -110,7 +103,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// Delete user (Admin)
+// Delete user 
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

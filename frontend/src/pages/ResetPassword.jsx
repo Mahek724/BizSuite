@@ -10,11 +10,10 @@ export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // ✅ useRef for input focus
   const passwordRef = useRef(null);
 
   useEffect(() => {
-    passwordRef.current?.focus(); // autofocus password input on mount
+    passwordRef.current?.focus(); 
   }, []);
 
   const onSubmit = async (e) => {
@@ -39,7 +38,7 @@ export default function ResetPassword() {
       <p>Set a new password for your account.</p>
       <form onSubmit={onSubmit}>
         <input
-          ref={passwordRef} // ← useRef attached here
+          ref={passwordRef} 
           type="password"
           placeholder="New password"
           value={password}

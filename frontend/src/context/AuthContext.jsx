@@ -22,7 +22,7 @@ function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate(); // ✅ Add this
 
-  // ✅ Fetch latest user data
+  // Fetch latest user data
   const fetchUser = async () => {
     try {
       const token =
@@ -69,7 +69,7 @@ function AuthProvider({ children }) {
     setUser(normalizedUser);
   };
 
-  // ✅ Updated logout with redirect
+  // Updated logout with redirect
   const logout = (showToast) => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
@@ -80,13 +80,10 @@ function AuthProvider({ children }) {
   if (window.google && window.google.accounts?.id) {
     window.google.accounts.id.disableAutoSelect();
   }
-
-  // small delay before redirect to allow toast animation
   setTimeout(() => {
     navigate("/login", { replace: true });
   }, showToast ? 800 : 0);
 };
-
 
   const refreshUser = () => fetchUser();
 

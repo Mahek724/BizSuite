@@ -14,10 +14,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // --- GOOGLE LOGIN (Popup Flow) ---
-  
-
-  // --- GOOGLE LOGIN (Redirect Flow) ---
+ 
    useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
@@ -78,7 +75,6 @@ function AuthPage() {
     try {
       const r = await api.post("/auth/login", li);
       login(r.data.user, r.data.token, li.remember);
-      // Redirect according to role
       if (r.data.user.role === "Admin") {
         navigate("/dashboard");
       } else {
@@ -258,7 +254,6 @@ function AuthPage() {
               <div className="col-12">
                 <div className="text-center my-2 small-note">Or continue with</div>
 
-                {/* Popup flow */}
                 <div id="googleDiv" className="d-flex justify-content-center"></div>
 
                 {/* Redirect fallback */}

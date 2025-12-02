@@ -7,11 +7,7 @@ import Task from "../models/Task.js";
 import Note from "../models/Note.js";
 import multer from "multer";
 
-/* ============================
-   📌 PROFILE CONTROLLER
-============================ */
-
-// ⚙️ Multer setup for avatar uploads
+// ⚙️ Multer for avatar uploads
 const uploadDir = "uploads/avatars";
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -25,7 +21,7 @@ export const avatarStorage = multer.diskStorage({
 
 export const upload = multer({ storage: avatarStorage });
 
-// 1️⃣ Get profile
+// Get profile
 export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
@@ -40,7 +36,7 @@ export const getProfile = async (req, res) => {
   }
 };
 
-// 2️⃣ Update profile info
+// Update profile info
 export const updateProfile = async (req, res) => {
   try {
     const { fullName, email } = req.body;
@@ -59,7 +55,7 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// 3️⃣ Upload avatar
+// Upload avatar
 export const uploadAvatar = async (req, res) => {
   try {
     if (!req.file)
@@ -74,7 +70,7 @@ export const uploadAvatar = async (req, res) => {
   }
 };
 
-// 4️⃣ Change password
+// Change password
 export const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -95,7 +91,7 @@ export const changePassword = async (req, res) => {
   }
 };
 
-// 5️⃣ Activity summary
+// Activity summary
 export const getActivitySummary = async (req, res) => {
   try {
     const leadsHandled = await Lead.countDocuments({ createdBy: req.user._id });
@@ -115,28 +111,4 @@ export const getActivitySummary = async (req, res) => {
   }
 };
 
-// 6️⃣ Update notification preferences
-export const updateNotificationPrefs = async (req, res) => {
-  try {
-    const { taskAssignment, leadUpdates, deadlineReminders, emailAlerts } = req.body;
 
-    const prefs = {
-      notifications: {
-        taskAssignment: !!taskAssignment,
-        leadUpdates: !!leadUpdates,
-        deadlineReminders: !!deadlineReminders,
-        emailAlerts: !!emailAlerts,
-      },
-    };
-
-    const updatedUser = await User.findByIdAndUpdate(req.user._id, prefs, { new: true })
-      .select("-passwordHash -resetToken");
-
-    res.json({
-      message: "Notification preferences updated",
-      user: updatedUser,
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Error updating notifications", error: err.message });
-  }
-};

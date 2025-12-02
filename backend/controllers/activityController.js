@@ -4,7 +4,7 @@ import Task from "../models/Task.js";
 import User from "../models/User.js";
 import { sendNotification } from "../utils/sendNotification.js";
 
-// ─── GET Stats Summary ───
+//GET Stats Summary
 export const getStatsSummary = async (req, res) => {
   try {
     const filter = req.user.role === "Admin" ? {} : { assignedTo: req.user.email };
@@ -38,13 +38,12 @@ export const getStatsSummary = async (req, res) => {
   }
 };
 
-// ─── GET All Activities ───
+// GET All Activities
 export const getActivities = async (req, res) => {
   try {
     const { page = 1, limit = 10, pinned } = req.query;
     const filter = req.user.role === "Admin" ? {} : { user: req.user._id };
 
-    // Add pinned filter if specified
     if (pinned !== undefined) {
       const isPinned = pinned === 'true';
       filter.pinnedBy = isPinned ? { $in: [req.user._id] } : { $nin: [req.user._id] };
@@ -89,7 +88,7 @@ export const getActivities = async (req, res) => {
   }
 };
 
-// ─── CREATE Activity ───
+// CREATE Activity
 export const createActivity = async (req, res) => {
   try {
     const { type, title, description, stage, status } = req.body;
@@ -127,7 +126,7 @@ export const createActivity = async (req, res) => {
   }
 };
 
-// ─── UPDATE Activity ───
+// UPDATE Activity
 export const updateActivity = async (req, res) => {
   try {
     const activity = await Activity.findById(req.params.id);
@@ -143,7 +142,7 @@ export const updateActivity = async (req, res) => {
   }
 };
 
-// ─── DELETE Activity ───
+// DELETE Activity
 export const deleteActivity = async (req, res) => {
   try {
     const activity = await Activity.findById(req.params.id);
@@ -159,7 +158,7 @@ export const deleteActivity = async (req, res) => {
   }
 };
 
-// ─── ADD Comment ───
+// ADD Comment
 export const addComment = async (req, res) => {
   try {
     const { text } = req.body;
@@ -191,7 +190,7 @@ export const addComment = async (req, res) => {
   }
 };
 
-// ─── PIN / UNPIN ───
+// PIN / UNPIN
 export const togglePin = async (req, res) => {
   try {
     const activity = await Activity.findById(req.params.id);
@@ -212,7 +211,7 @@ export const togglePin = async (req, res) => {
   }
 };
 
-// ─── LIKE / UNLIKE ───
+// LIKE / UNLIKE
 export const toggleLike = async (req, res) => {
   try {
     const activity = await Activity.findById(req.params.id).populate("user", "fullName name color");

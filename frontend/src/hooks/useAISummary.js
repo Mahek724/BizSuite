@@ -2,7 +2,6 @@ import { useState } from "react";
 import { getAISummary } from "../services/dashboardAI";
 
 const useAISummary = () => {
-  // ✅ Load old summary when hook initializes
   const [summary, setSummary] = useState(() => {
     return localStorage.getItem("ai_summary") || "";
   });
@@ -15,8 +14,6 @@ const useAISummary = () => {
       const result = await getAISummary(data);
 
       setSummary(result);
-
-      // ✅ Save summary so it stays after navigation
       localStorage.setItem("ai_summary", result);
 
     } catch (err) {
@@ -30,11 +27,8 @@ const useAISummary = () => {
 
   const closeSummary = () => {
     setSummary("");
-
-    // ❌ Remove stored summary when user closes manually
     localStorage.removeItem("ai_summary");
   };
-
   return { summary, loading, generateSummary, closeSummary };
 };
 

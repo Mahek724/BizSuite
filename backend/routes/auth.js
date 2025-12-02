@@ -12,11 +12,8 @@ import {
 
 const router = express.Router();
 
-// Signup & Login
 router.post("/signup", signup);
 router.post("/login", login);
-
-// Current user
 router.get("/me", me);
 
 // Google OAuth

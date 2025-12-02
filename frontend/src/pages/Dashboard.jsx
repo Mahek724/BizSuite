@@ -322,7 +322,6 @@ const Dashboard = () => {
 
       {/* Right section */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden w-full">
-        {/* Navbar - stays sticky on top */}
         <div className="sticky top-0 z-50 bg-[#fffaf7] shadow-sm">
           <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
         </div>

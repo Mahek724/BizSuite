@@ -39,13 +39,12 @@ const Leads = () => {
   const { searchQuery, setSearchQuery } = useSearch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const token = localStorage.getItem("token"); // adjust if token comes from context
+  const token = localStorage.getItem("token");
   const isAdmin = (user?.role || localStorage.getItem("role") || "")
     .toString()
     .toLowerCase() === "admin";
   const isStaff = (user?.role || "").toString().toLowerCase() === "staff";
 
-  // attach auth header
   api.interceptors.request.use((cfg) => {
     if (!cfg.headers) cfg.headers = {};
     if (token) cfg.headers.Authorization = `Bearer ${token}`;
@@ -57,7 +56,6 @@ const Leads = () => {
   const [exporting, setExporting] = useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
-  // Debounce search query to improve performance
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -126,7 +124,6 @@ const Leads = () => {
     if (user?.role) fetchStaff();
   }, [user]);
 
-  // Helper: normalize leads from server to use `id` consistently (UI expects lead.id)
   const normalizeLead = (lead) => {
     return {
       ...lead,
@@ -162,7 +159,6 @@ const Leads = () => {
 
   useEffect(() => {
     fetchLeads();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -182,7 +178,6 @@ const Leads = () => {
     setSelectedLead(null);
   };
 
-  // Add lead -> POST /api/leads
   const handleAddLead = async (e) => {
     e?.preventDefault?.();
     if (!formData.name || !formData.email) {
@@ -211,7 +206,6 @@ const Leads = () => {
     }
   };
 
-  // Edit existing lead -> PUT /api/leads/:id
   const handleEditLead = async (e) => {
     e?.preventDefault?.();
     if (!selectedLead?.id) {
@@ -220,11 +214,8 @@ const Leads = () => {
     }
 
     try {
-      // If user is staff (not admin) backend enforces only "stage" property allowed.
-      // So send only { stage } when editing as staff.
       let payload;
       if (!isAdmin) {
-        // Validate allowed stage values for staff (only Won or Lost)
         const allowed = ["Won", "Lost"];
         if (!formData.stage || !allowed.includes(formData.stage)) {
           alert("As staff you can only mark a lead Won or Lost.");
@@ -232,7 +223,6 @@ const Leads = () => {
         }
         payload = { stage: formData.stage };
       } else {
-        // Admin full update
         if (!formData.name || !formData.email) {
           alert("Please fill in required fields");
           return;
@@ -260,7 +250,6 @@ const Leads = () => {
     }
   };
 
-  // Delete -> DELETE /api/leads/:id
   const handleDelete = async () => {
     if (!deleteConfirm) return;
     try {
@@ -292,7 +281,6 @@ const Leads = () => {
     setShowDetailsModal(true);
   };
 
-  // Drag & drop handlers - update stage on backend
   const handleDragStart = (e, lead) => {
     e.dataTransfer.setData("leadId", lead.id);
     e.dataTransfer.effectAllowed = "move";
@@ -359,12 +347,8 @@ const Leads = () => {
     });
   };
 
-  // Stage options when editing: admin = full list, staff = only Won/Lost
   const editStageOptions = isAdmin ? stages.filter((s) => s !== "All Stages") : ["Won", "Lost"];
 
-  // -----------------------
-  // CSV Export helpers
-  // -----------------------
   const convertToCSV = (objArray) => {
     const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray || "[]");
     if (!array.length) return "";
@@ -381,12 +365,6 @@ const Leads = () => {
     return [header, ...rows].join("\r\n");
   };
 
-  /**
-   * Export all leads as CSV.
-   * - Admin and Staff allowed.
-   * - Fetches all leads from backend (no filters) to ensure full export.
-   * - If your dataset is large, consider server-side streaming endpoint instead.
-   */
   const handleExportAllLeads = async () => {
     if (!(isAdmin || isStaff)) {
       alert("Export allowed for Admin or Staff only.");
@@ -395,9 +373,7 @@ const Leads = () => {
 
     setExporting(true);
     try {
-      // Try to fetch all leads. If backend supports pagination, consider adding a special endpoint /leads/export
       const res = await api.get("/leads", { params: {} });
-      // backend may return an array or { leads: [] }
       const dataArray = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.leads) ? res.data.leads : []);
       if (!dataArray || dataArray.length === 0) {
         alert("No leads available to export.");
@@ -405,7 +381,6 @@ const Leads = () => {
         return;
       }
 
-      // Map to desired CSV columns
       const csvData = dataArray.map((c) => ({
         Name: c.name || "",
         Email: c.email || "",
@@ -454,7 +429,6 @@ const Leads = () => {
 
     {/* Main Section */}
     <div className="flex-1 flex flex-col h-screen overflow-hidden">
-      {/* Navbar - sticky at the top */}
       <div className="sticky top-0 z-50 bg-white shadow-sm">
         <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       </div>
@@ -502,7 +476,6 @@ const Leads = () => {
                 </button>
               </div>
 
-              {/* Export All Leads - visible to Admin or Staff */}
               {(isAdmin || isStaff) && (
                 <button
                   onClick={handleExportAllLeads}

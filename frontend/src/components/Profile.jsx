@@ -5,8 +5,6 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-
-// const API_BASE = "http://localhost:5000/api/profile";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_BASE = `${API_URL}/api/profile`;
 
@@ -34,7 +32,6 @@ const Profile = ({ isOpen, onClose }) => {
 
   const token = localStorage.getItem("token");
 
-  // change-password form state
   const [showChangeForm, setShowChangeForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -44,11 +41,8 @@ const Profile = ({ isOpen, onClose }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [changeLoading, setChangeLoading] = useState(false);
   const [changeError, setChangeError] = useState("");
-
-  // Mobile sidebar toggle
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // date formatting helpers
   const formatYear = (isoOrDate) => {
     if (!isoOrDate) return "";
     const d = new Date(isoOrDate);
@@ -70,7 +64,7 @@ const Profile = ({ isOpen, onClose }) => {
     });
   };
 
-  // ✅ Fetch profile data
+  // Fetch profile data
   useEffect(() => {
     if (!isOpen) return;
 
@@ -117,14 +111,13 @@ const Profile = ({ isOpen, onClose }) => {
     fetchData();
   }, [isOpen]);
 
-  // ✅ Toast utility
   const showToastMessage = (message) => {
     setToastMessage(message);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2500);
   };
 
-  // ✅ Profile Update
+  // Profile Update
   const handleEditToggle = async () => {
     if (isEditing) {
       try {
@@ -147,7 +140,7 @@ const Profile = ({ isOpen, onClose }) => {
     setIsEditing(!isEditing);
   };
 
-  // ✅ Avatar Upload
+  // Avatar Upload
   const handleAvatarUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -161,7 +154,6 @@ const Profile = ({ isOpen, onClose }) => {
         body: formData,
       });
       showToastMessage("Profile picture updated successfully");
-      // refetch profile to get new avatar URL
       const res = await fetch(`${API_BASE}`, { headers: { Authorization: `Bearer ${token}` } });
       const user = await res.json();
       if (user) setProfileData((prev) => ({ ...prev, ...user }));
@@ -171,7 +163,7 @@ const Profile = ({ isOpen, onClose }) => {
     }
   };
 
-  // ✅ Notifications Toggle
+  // Notifications Toggle
   const toggleNotification = async (key) => {
     const updated = { ...notifications, [key]: !notifications[key] };
     setNotifications(updated);
@@ -190,7 +182,6 @@ const Profile = ({ isOpen, onClose }) => {
     }
   };
 
-  // show inline change password form instead of prompt
   const openChangePasswordForm = () => {
     setChangeError("");
     setCurrentPassword("");
@@ -257,7 +248,7 @@ const Profile = ({ isOpen, onClose }) => {
  const handleLogout = () => {
     showToastMessage("Logging out...");
     setTimeout(() => {
-      logout(true); // ✅ calls AuthContext logout with toast delay
+      logout(true); 
     }, 800);
   };
 
@@ -394,7 +385,6 @@ const Profile = ({ isOpen, onClose }) => {
                   <h4>Security</h4>
                 </div>
 
-                {/* Change Password form inline (shows when showChangeForm === true) */}
                 {!showChangeForm ? (
                   <div className="p-4">
                     <p className="text-sm text-gray-600 mb-3">Change your account password</p>
@@ -505,7 +495,6 @@ const Profile = ({ isOpen, onClose }) => {
                   </div>
                 </div>
               </div>
-
 
               <button className="logout-btn" onClick={handleLogout}>
                 <i className="bi bi-box-arrow-right"></i> Logout

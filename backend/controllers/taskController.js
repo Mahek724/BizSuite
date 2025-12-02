@@ -2,10 +2,6 @@ import Task from "../models/Task.js";
 import User from "../models/User.js";
 import { sendNotification } from "../utils/sendNotification.js";
 
-/* ============================
-   📌 TASK CONTROLLER
-============================ */
-
 // Get all tasks with pagination
 export const getAllTasks = async (req, res) => {
   try {
@@ -16,15 +12,12 @@ export const getAllTasks = async (req, res) => {
     let query = {};
     const userRole = req.user?.role?.toLowerCase();
 
-    // Filter tasks based on user role
     if (userRole === "staff") {
       query.assignedTo = req.user.fullName;
     }
 
-    // Get total count for pagination based on filtered query
     const totalTasks = await Task.countDocuments(query);
 
-    // Get paginated tasks
     const tasks = await Task.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -64,7 +57,6 @@ export const createTask = async (req, res) => {
   try {
     const newTask = await Task.create(req.body);
 
-    // notify assigned staff if present
     if (req.body.assignedTo) {
       try {
         const staff = await User.findOne({ fullName: req.body.assignedTo });
@@ -99,7 +91,6 @@ export const updateTask = async (req, res) => {
 
     if (!updatedTask) return res.status(404).json({ message: "Task not found" });
 
-    // If a staff (not admin) changes status, notify all admins
     if (req.body.status && req.user.role !== "Admin") {
       const admins = await User.find({ role: "Admin" });
       await sendNotification({

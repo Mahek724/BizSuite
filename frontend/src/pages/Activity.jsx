@@ -77,11 +77,7 @@ const Activity = () => {
     description: "",
     type: "Lead",
   });
-
-  // UI state specifically for pinned section
   const [pinnedCollapsed, setPinnedCollapsed] = useState(false);
-
-  // export state
   const [exporting, setExporting] = useState(false);
 
   function getInitials(name = "") {
@@ -335,11 +331,7 @@ const Activity = () => {
   useEffect(() => {
     fetchActivities();
     fetchSummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchActivities, fetchSummary]);
-
-  // Note: Filters are not applied to pinned/recent activities as they are fetched separately.
-  // If needed, apply filters client-side or adjust API calls.
 
   const handleEditClick = (activity) => {
     setEditActivity({
@@ -446,7 +438,6 @@ const Activity = () => {
 
     try {
       await api.patch(`/activities/${activityId}/pin`, {}, { headers });
-      // Refetch both pinned and recent activities since pinning moves items between lists
       await Promise.all([fetchPinnedActivities(), fetchRecentActivities()]);
     } catch (err) {
       console.error("Failed to pin activity:", err?.response?.data ?? err.message);
@@ -522,9 +513,6 @@ const Activity = () => {
   const totalActivities = summary.totalActivities ?? (pinnedActivities.length + recentActivities.length);
   const tasksCompleted = summary.tasksCompleted ?? 0;
 
-  // -----------------------
-  // CSV Export helpers for Activities
-  // -----------------------
   const convertToCSV = (objArray) => {
     const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray || "[]");
     if (!array.length) return "";
@@ -534,7 +522,6 @@ const Activity = () => {
       keys
         .map((k) => {
           const cell = row[k] ?? "";
-          // Escape double quotes and wrap in quotes
           return `"${String(cell).replace(/"/g, '""')}"`;
         })
         .join(",")
@@ -558,10 +545,6 @@ const Activity = () => {
     }
   };
 
-  /**
-   * Export CSV for recent activities.
-   * Visible to Admin and Staff.
-   */
   const handleExportActivities = async () => {
     const role = (user?.role || "").toLowerCase();
     if (!(role === "admin" || role === "staff")) {
@@ -623,7 +606,6 @@ const Activity = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {/* header / add button (unchanged) */}
           <motion.div
             className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6"
             initial={{ opacity: 0, y: -20 }}
@@ -714,7 +696,6 @@ const Activity = () => {
                 {summaryError && <div className="text-xs text-red-500 mt-2">{summaryError}</div>}
               </motion.div>
 
-              {/* other summary cards omitted here for brevity in reading — same as original */}
               <motion.div
                 whileHover={{
                   scale: 1.05,
@@ -810,7 +791,6 @@ const Activity = () => {
             </div>
           </div>
 
-          {/* filters (unchanged) */}
           <div className="px-6 pb-6">
             <motion.div
               className="bg-white rounded-2xl p-4 md:p-6 shadow-sm mb-6 border border-gray-100"

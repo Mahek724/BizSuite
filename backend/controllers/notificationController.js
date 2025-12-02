@@ -1,10 +1,6 @@
 import Notification from "../models/Notification.js";
 
-/* ============================
-   📌 NOTIFICATION CONTROLLER
-============================ */
-
-// ✅ Get all notifications for logged-in user
+// Get all notifications for logged-in user
 export const getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ receiver: req.user._id })
@@ -17,7 +13,7 @@ export const getNotifications = async (req, res) => {
   }
 };
 
-// ✅ Mark a single notification as read
+// Mark a single notification as read
 export const markAsRead = async (req, res) => {
   try {
     const updated = await Notification.findByIdAndUpdate(
@@ -31,7 +27,7 @@ export const markAsRead = async (req, res) => {
   }
 };
 
-// ✅ Clear all notifications for logged-in user
+// Clear all notifications for logged-in user
 export const clearNotifications = async (req, res) => {
   try {
     await Notification.deleteMany({ receiver: req.user._id });
@@ -41,7 +37,7 @@ export const clearNotifications = async (req, res) => {
   }
 };
 
-// ✅ Mark all notifications as read
+// Mark all notifications as read
 export const markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany(

@@ -42,7 +42,6 @@ passport.use(
   )
 );
 
-
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
   try {
@@ -52,5 +51,4 @@ passport.deserializeUser(async (id, done) => {
     done(err, null);
   }
 });
-
 export default passport;

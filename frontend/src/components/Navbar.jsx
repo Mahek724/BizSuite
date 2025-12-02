@@ -41,9 +41,6 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen, isSidebarOpen, setIsSid
 
     : null;
 
-  // ===========================
-  // 🔔 Notification Logic
-  // ===========================
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -93,7 +90,6 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen, isSidebarOpen, setIsSid
   return (
     <>
       <header className="sticky top-0 z-50 flex items-center justify-between bg-white border-b px-6 py-3 shadow-sm">
-        {/* Hamburger Button for Mobile */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="md:hidden mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -121,7 +117,6 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen, isSidebarOpen, setIsSid
         </div>
 
         <div className="flex items-center space-x-5 relative">
-          {/* 🔔 Notification Bell */}
           <div className="relative">
             <button
               onClick={() => setOpenNotif(!openNotif)}
@@ -143,7 +138,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen, isSidebarOpen, setIsSid
               )}
             </button>
 
-            {/* 🔔 Notification Dropdown */}
+            {/* Notification Dropdown */}
             {openNotif && (
               <div className="absolute right-0 mt-3 w-80 bg-white border rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                 <div className="p-3 font-semibold border-b flex justify-between items-center">
@@ -204,7 +199,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen, isSidebarOpen, setIsSid
             )}
           </div>
 
-          {/* 👤 Profile Section */}
+          {/* Profile Section */}
           <div
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => setIsProfileOpen(true)}

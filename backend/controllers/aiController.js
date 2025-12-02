@@ -7,13 +7,11 @@ export const generateSummary = async (req, res) => {
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({ error: "Gemini API Key not found" });
     }
-
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash", // PRO VERSION
+      model: "gemini-2.5-flash", 
     });
-
     const prompt = `
 You are an AI dashboard assistant.
 

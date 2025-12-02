@@ -3,12 +3,7 @@ import User from "../models/User.js";
 import { sendNotification } from "../utils/sendNotification.js";
 import mongoose from "mongoose";
 
-
-/* ============================
-   📌 NOTE CONTROLLER
-============================ */
-
-// ✅ Get all notes with pagination (Admin → all, Staff → only their own)
+// Get all notes with pagination (Admin gets all, Staff gets only their own)
 export const getNotes = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -19,17 +14,13 @@ export const getNotes = async (req, res) => {
     if (req.user.role !== "Admin") {
       query.createdBy = req.user._id;
     }
-
-    // Get total count for pagination
     const totalNotes = await Note.countDocuments(query);
 
-    // Get paginated notes
     const notes = await Note.find(query)
       .populate("createdBy", "fullName email role")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-
     const totalPages = Math.ceil(totalNotes / limit);
 
     res.status(200).json({
@@ -48,7 +39,7 @@ export const getNotes = async (req, res) => {
   }
 };
 
-// ✅ Create a new note
+// Create a new note
 export const createNote = async (req, res) => {
   const { title, content, category, color, isPinned } = req.body;
 
@@ -82,7 +73,7 @@ export const createNote = async (req, res) => {
   }
 };
 
-// ✅ Update a note (Admin or owner only)
+// Update a note (Admin or owner only)
 export const updateNote = async (req, res) => {
   try {
     const note = await Note.findById(req.params.id);
@@ -99,7 +90,7 @@ export const updateNote = async (req, res) => {
   }
 };
 
-// ✅ Delete a note (Admin or owner only)
+// Delete a note (Admin or owner only)
 export const deleteNote = async (req, res) => {
   try {
     const note = await Note.findById(req.params.id);
@@ -116,7 +107,7 @@ export const deleteNote = async (req, res) => {
   }
 };
 
-// ✅ Get pinned notes with pagination
+// Get pinned notes with pagination
 export const getPinnedNotes = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -127,11 +118,7 @@ export const getPinnedNotes = async (req, res) => {
     if (req.user.role !== "Admin") {
       query.createdBy = req.user._id;
     }
-
-    // Get total count for pagination
     const totalNotes = await Note.countDocuments(query);
-
-    // Get paginated pinned notes
     const notes = await Note.find(query)
       .populate("createdBy", "fullName email role")
       .sort({ createdAt: -1 })
@@ -156,7 +143,7 @@ export const getPinnedNotes = async (req, res) => {
   }
 };
 
-// ✅ Get unpinned notes with pagination
+// Get unpinned notes with pagination
 export const getUnpinnedNotes = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -167,11 +154,8 @@ export const getUnpinnedNotes = async (req, res) => {
     if (req.user.role !== "Admin") {
       query.createdBy = req.user._id;
     }
-
-    // Get total count for pagination
     const totalNotes = await Note.countDocuments(query);
 
-    // Get paginated unpinned notes
     const notes = await Note.find(query)
       .populate("createdBy", "fullName email role")
       .sort({ createdAt: -1 })
@@ -196,7 +180,7 @@ export const getUnpinnedNotes = async (req, res) => {
   }
 };
 
-// ✅ Toggle pin (Admin or owner only)
+// Toggle pin (Admin or owner only)
 export const togglePinNote = async (req, res) => {
   try {
     const note = await Note.findById(req.params.id);
@@ -209,14 +193,12 @@ export const togglePinNote = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    // Ensure pinnedBy is an array
     if (!Array.isArray(note.pinnedBy)) {
       note.pinnedBy = [];
     }
 
     const userId = new mongoose.Types.ObjectId(req.user._id);
 
-    // 🔥 Convert all IDs inside pinnedBy to ObjectId safely
     note.pinnedBy = note.pinnedBy.map(id => typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id);
 
     const isPinned = note.pinnedBy.some(id => id.equals(userId));
@@ -226,7 +208,6 @@ export const togglePinNote = async (req, res) => {
     } else {
       note.pinnedBy.push(userId);
     }
-
     await note.save();
 
     const populated = await Note.findById(note._id).populate(

@@ -28,16 +28,15 @@ const activitySchema = new mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String, required: true },
 
-    // ✅ NEW: status for tracking completion or progress
     status: {
       type: String,
       enum: [
         "Open",
         "In Progress",
-        "Won",        // For Leads/Deals
-        "Lost",       // For Leads/Deals
-        "Completed",  // For Tasks
-        "Pending",    // Optional, for Tasks or general
+        "Won",        
+        "Lost",     
+        "Completed",  
+        "Pending",  
       ],
       default: "Open",
     },

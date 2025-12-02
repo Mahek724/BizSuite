@@ -1,8 +1,8 @@
 :root{
-  --c1:#FFCDB2; /* light peach */
-  --c2:#FFB4A2; /* peach */
-  --c3:#E5989B; /* dusty pink */
-  --c4:#B5838D; /* mauve */
+  --c1:#FFCDB2; 
+  --c2:#FFB4A2; 
+  --c3:#E5989B; 
+  --c4:#B5838D; 
   --ink:#2d1f24;
   --bg:#fff8f6;
 }
@@ -13,8 +13,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh; /* full height of viewport */
-  margin: 0; /* remove default margin */
+  min-height: 100vh; 
+  margin: 0; 
 }
 
 *{ box-sizing: border-box; }
@@ -22,7 +22,7 @@ body {
 .auth-wrap {
   width: 100%;
   max-width: 1000px;
-  margin: 0; /* remove 4rem auto */
+  margin: 0;
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,.08);
   overflow: hidden;
@@ -30,16 +30,15 @@ body {
   grid-template-columns: 1fr 1fr;
   background: white;
 }
-/* center the header inside each slide */
+
 .slide {
   width: 50%;
   padding: 2rem 2.5rem;
   display: flex;
   flex-direction: column;
-  align-items: center; /* centers horizontally */
+  align-items: center; 
 }
 
-/* style header itself */
 .auth-header {
   text-align: center;
   font-size: 28px;
@@ -51,7 +50,6 @@ body {
   position: relative;
 }
 
-/* gradient underline */
 .auth-header::after {
   content: "";
   display: block;
@@ -61,8 +59,6 @@ body {
   margin: 8px auto 0;
   border-radius: 2px;
 }
-
-
 
 .panel{
   position: relative;
@@ -74,8 +70,8 @@ body {
   color: #432c34;
   display: flex;
   flex-direction: column;
-  justify-content: center;   /* vertical center */
-  align-items: center;       /* horizontal center */
+  justify-content: center;   
+  align-items: center;       
   text-align: center;
   padding: 2rem;
 }
@@ -89,7 +85,7 @@ body {
 }
 
 .left .small-note {
-  font-size: 1.1rem;        /* bigger tagline */
+  font-size: 1.1rem;        
   font-weight: 500;
   line-height: 1.5;
   font-family: "Nunito", sans-serif;
@@ -97,7 +93,6 @@ body {
   max-width: 320px;
   text-align: center;
 }
-
 
 .brand{
   font-weight: 800;
@@ -135,7 +130,6 @@ body {
 
 .slide-container.show-login{ transform: translateX(-50%); }
 
-
 input, select{
   border-radius: 10px !important;
   border: 1px solid #ead3d3 !important;
@@ -152,9 +146,8 @@ input, select{
 .link:hover{ text-decoration: underline; }
 
 .form-check-label {
-  margin-left: 0.35rem; /* add small space between checkbox & text */
+  margin-left: 0.35rem; 
 }
-
 
 .small-note{ color: #8a6b75; font-size: .9rem; }
 
@@ -166,15 +159,10 @@ input, select{
 }
 
 .google-btn:hover {
-  /* background-color: #e582a0; */
   border-color: #071253;
 }
 
-/* =========================================
-   RESPONSIVE DESIGN
-   ========================================= */
-
-/* ---------- Tablets (max-width: 992px) ---------- */
+/*  Tablets (max-width: 992px) */
 @media (max-width: 992px) {
 
   .auth-wrap {
@@ -196,7 +184,7 @@ input, select{
   }
 }
 
-/* ---------- Mobile Landscape (max-width: 768px) ---------- */
+/* Mobile Landscape (max-width: 768px) */
 @media (max-width: 768px) {
 
   body {
@@ -209,7 +197,6 @@ input, select{
     max-width: 480px;
   }
 
-  /* Stack left panel above the form */
   .left {
     order: 1;
     padding: 2rem 1.5rem;
@@ -247,7 +234,7 @@ input, select{
   }
 }
 
-/* ---------- Mobile Small (max-width: 480px) ---------- */
+/* Mobile Small (max-width: 480px) */
 @media (max-width: 480px) {
 
   body {

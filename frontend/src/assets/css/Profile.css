@@ -577,7 +577,6 @@
   transform: translateX(20px);
 }
 
-/* Logout Button */
 .logout-btn {
   width: 100%;
   padding: 14px;
@@ -605,7 +604,6 @@
   font-size: 18px;
 }
 
-/* Toast Notification */
 .toast-notification {
   position: fixed;
   bottom: 30px;
@@ -639,7 +637,6 @@
   font-size: 20px;
 }
 
-/* Mobile Sidebar Styles */
 .profile-sidebar {
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
@@ -720,7 +717,6 @@
     opacity: 1;
   }
 
-  /* Adjust main content on mobile */
   .col-lg-8 {
     width: 100%;
   }
@@ -741,7 +737,6 @@
   }
 }
 
-/* Scrollbar Styling */
 .profile-modal-container::-webkit-scrollbar {
   width: 8px;
 }

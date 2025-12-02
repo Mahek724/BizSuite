@@ -21,7 +21,7 @@ const notificationSchema = new mongoose.Schema(
     },
     message: { type: String, required: true },
     relatedId: { type: mongoose.Schema.Types.ObjectId, refPath: "onModel" },
-    onModel: { type: String }, // can be 'Lead', 'Task', 'Activity', etc.
+    onModel: { type: String }, 
     isRead: { type: Boolean, default: false },
     readAt: { type: Date, default: null },
     link: { type: String, default: "" },

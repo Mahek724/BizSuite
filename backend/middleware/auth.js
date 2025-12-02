@@ -1,13 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-/**
- * Authenticate middleware (Bearer JWT).
- * - Validates header format
- * - Verifies token
- * - Loads user from DB (without passwordHash)
- * - Logs errors for easier debugging (does not expose sensitive data)
- */
 export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers?.authorization;
@@ -32,15 +25,10 @@ export const authenticate = async (req, res, next) => {
       return res.status(500).json({ message: "Server auth misconfiguration" });
     }
 
-    // Optionally inspect token payload during debugging without verifying:
-    // const decodedPreview = jwt.decode(token);
-    // console.log("authenticate: token preview:", decodedPreview);
-
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (verifyErr) {
-      // Provide specific feedback on token verification errors (expired vs invalid)
       console.warn("authenticate: token verification failed:", verifyErr.name, verifyErr.message);
       if (verifyErr.name === "TokenExpiredError") {
         return res.status(401).json({ message: "Token expired" });
@@ -53,7 +41,6 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid token payload" });
     }
 
-    // Load user from DB; any DB error should be logged and returned as 500
     let user;
     try {
       user = await User.findById(decoded.id).select("-passwordHash");
@@ -70,7 +57,6 @@ export const authenticate = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
-    // Fallback catch — log full error for diagnosis
     console.error("authenticate: unexpected error:", err);
     return res.status(500).json({ message: "Authentication failed" });
   }

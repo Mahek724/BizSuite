@@ -24,9 +24,6 @@ const noteSchema = new mongoose.Schema(
   ref: "User",
   default: [],
 },
-
-
-    // 👇 New field: track the user who created the note
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

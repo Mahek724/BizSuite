@@ -141,18 +141,17 @@ const Clients = () => {
       return;
     }
     try {
-      if (selectedClient._id) { // Edit mode
+      if (selectedClient._id) { 
         await api.put(`/clients/${selectedClient._id}`, selectedClient, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
         setIsEditFormOpen(false);
-      } else { // Add mode
+      } else { 
         await api.post("/clients", selectedClient, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
         setIsAddFormOpen(false);
       }
-      // Reload current page after save
       fetchClients(currentPage, searchTerm, filterTag);
       setSelectedClient(null);
       setError("");
@@ -229,9 +228,7 @@ const Clients = () => {
     ),
   ];
 
-  // -----------------------
-  // CSV Export helpers
-  // -----------------------
+ 
   const convertToCSV = (objArray) => {
     const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray);
     if (array.length === 0) return "";
@@ -241,7 +238,6 @@ const Clients = () => {
       keys
         .map(k => {
           const cell = row[k] ?? "";
-          // Escape double quotes and wrap in quotes
           return `"${String(cell).replace(/"/g, '""')}"`;
         })
         .join(",")
@@ -273,7 +269,6 @@ const Clients = () => {
     });
 
     const csv = convertToCSV(data);
-    // prepend BOM for Excel compatibility
     const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -327,19 +322,18 @@ const Clients = () => {
             </div>
 
             <div className="flex items-center gap-3">
-<button
-  onClick={handleExportCSV}
-  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 
-             px-4 py-2.5 rounded-lg font-medium shadow-sm 
-             hover:bg-rose-900 hover:border-rose-300 hover:shadow-md hover:scale-[1.02] 
-             transition-all duration-200"
->
-  {/* Optional icon */}
-  <FaFileCsv className="w-4 h-4" />
-  <span>Export CSV</span>
-</button>
 
-              
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 
+                            px-4 py-2.5 rounded-lg font-medium shadow-sm 
+                            hover:bg-rose-900 hover:border-rose-300 hover:shadow-md hover:scale-[1.02] 
+                            transition-all duration-200"
+                >
+                  {/* Optional icon */}
+                  <FaFileCsv className="w-4 h-4" />
+                  <span>Export CSV</span>
+                </button>
 
               {user?.role !== "staff" && (
                 <button
@@ -859,8 +853,6 @@ const Clients = () => {
   )}
   </div>
 </div>
-
-
           {error && (
             <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
               {error}
@@ -889,9 +881,6 @@ const Clients = () => {
   )}
 </AnimatePresence>
 
-
-
-          {/* Details Modal */}
           {/* Details Modal */}
 <AnimatePresence>
   {isDetailsOpen && selectedClient && (

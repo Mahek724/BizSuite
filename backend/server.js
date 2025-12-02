@@ -8,7 +8,7 @@ import connectDB from "./config/db.js";
 import session from "express-session";
 import passport from "./config/passport.js";
 
-// ✅ Import Routes
+// Import Routes
 import authRoutes from "./routes/auth.js";
 import clientRoutes from "./routes/clients.js";
 import leadRoutes from "./routes/leadRoutes.js";
@@ -23,7 +23,7 @@ import aiSummaryRoute from "./routes/aiSummary.js";
 
 const app = express();
 
-// ✅ Dynamic CORS setup
+// CORS setup
 const allowedOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((o) => o.trim())
@@ -32,7 +32,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS || "")
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // allow mobile/postman
+      if (!origin) return callback(null, true); 
       if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -48,7 +48,7 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json());
 
-// ✅ Sessions + Passport
+// Sessions + Passport
 app.use(
   session({
     secret: process.env.JWT_SECRET,
@@ -59,7 +59,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ✅ Register Routes
+// Register Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/leads", leadRoutes);
@@ -73,10 +73,10 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai-summary", aiSummaryRoute);
 
-// ✅ Health check (for Render)
+// Health check (for Render)
 app.get("/_health", (_req, res) => res.json({ ok: true }));
 
-// ✅ Start Server
+// Start Server
 const start = async () => {
   try {
     await connectDB(process.env.MONGO_URI);

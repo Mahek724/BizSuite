@@ -4,13 +4,13 @@ import nodemailer from "nodemailer";
 import Joi from "joi";
 import User from "../models/User.js";
 
-// JWT helper
+// JWT Signing
 const signToken = (payload, long = false) => {
   const expiresIn = long ? process.env.JWT_EXPIRES_LONG : process.env.JWT_EXPIRES;
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 };
 
-// Validators
+// Validation Schemas
 const signupSchema = Joi.object({
   fullName: Joi.string().min(2).required(),
   email: Joi.string().email().required(),
@@ -25,8 +25,6 @@ const loginSchema = Joi.object({
   password: Joi.string().required(),
   remember: Joi.boolean().default(false),
 });
-
-// ---------- Controller Functions ----------
 
 // Signup
 export const signup = async (req, res) => {
@@ -70,25 +68,26 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password, remember } = await loginSchema.validateAsync(req.body);
-
-    let user = await User.findOne({ email });
+    const user = await User.findOne({ email });
 
     if (!user) {
-      const hashed = await bcrypt.hash(password, 10);
-      user = await User.create({
-        fullName: email.split("@")[0],
-        email,
-        passwordHash: hashed,
-        role: "Staff",
+      return res.status(404).json({
+        message: "User does not exist. Please sign up first."
       });
     }
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(400).json({ message: "Invalid credentials" });
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    const token = signToken({ id: user._id, role: user.role, name: user.fullName }, remember);
+    const token = signToken(
+      { id: user._id, role: user.role, name: user.fullName },
+      remember
+    );
 
-    res.json({
+    return res.json({
+      message: "Login successful",
       user: {
         id: user._id,
         fullName: user.fullName,
@@ -99,10 +98,12 @@ export const login = async (req, res) => {
       },
       token,
     });
+
   } catch (err) {
-    res.status(400).json({ message: err.message || "Invalid data" });
+    return res.status(400).json({ message: err.message || "Invalid data" });
   }
 };
+
 
 // Get current user
 export const me = async (req, res) => {

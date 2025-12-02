@@ -3,11 +3,7 @@ import Lead from "../models/Lead.js";
 import User from "../models/User.js";
 import { sendNotification } from "../utils/sendNotification.js";
 
-/* ============================
-   📌 LEAD CONTROLLER
-============================ */
-
-// ➕ Create lead (Admin only)
+// Create lead
 export const createLead = async (req, res) => {
   try {
     if (!req.user || req.user.role !== "Admin") {
@@ -36,7 +32,7 @@ export const createLead = async (req, res) => {
   }
 };
 
-// 📋 Get leads — Admin gets all; Staff gets only assigned leads
+// Get leads — Admin gets all; Staff gets only assigned leads
 export const getLeads = async (req, res) => {
   try {
     const { stage, source, assignedTo } = req.query;
@@ -62,7 +58,7 @@ export const getLeads = async (req, res) => {
   }
 };
 
-// 📄 Get single lead by ID — Staff only if assigned to them
+// Get single lead by ID
 export const getLeadById = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id))
@@ -87,7 +83,7 @@ export const getLeadById = async (req, res) => {
   }
 };
 
-// ✏️ Update lead (Admin or Staff)
+// Update lead (Admin or Staff)
 export const updateLead = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
@@ -95,7 +91,7 @@ export const updateLead = async (req, res) => {
     const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
 
-    // Staff restrictions
+    // Staff restrictions on update
     if (req.user.role !== "Admin") {
       const assignedVal = String(lead.assignedTo || "");
       const userVal = req.user.fullName || String(req.user._id);
@@ -125,8 +121,6 @@ export const updateLead = async (req, res) => {
 
       return res.json(lead);
     }
-
-    // Admin path
     const updated = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -137,7 +131,7 @@ export const updateLead = async (req, res) => {
   }
 };
 
-// ❌ Delete lead — Admin only
+// Delete lead — Admin only
 export const deleteLead = async (req, res) => {
   try {
     if (!req.user || req.user.role !== "Admin") {
@@ -153,7 +147,7 @@ export const deleteLead = async (req, res) => {
   }
 };
 
-// 🔍 Get distinct sources for a user
+// Get distinct sources for a user
 export const getLeadSources = async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });

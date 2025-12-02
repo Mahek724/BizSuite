@@ -2,7 +2,7 @@ import Client from "../models/Client.js";
 import User from "../models/User.js";
 import { sendNotification } from "../utils/sendNotification.js";
 
-// Get all clients with pagination and filtering
+// Get all clients with pagination, search, and tag filtering
 export const getClients = async (req, res) => {
   try {
     const { page = 1, limit = 8, search = "", tag = "All Tags" } = req.query;
@@ -10,13 +10,10 @@ export const getClients = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    // Build filter query
     let filterQuery = {};
     if (req.user.role !== "Admin") {
       filterQuery.assignedTo = req.user._id;
     }
-
-    // Add search filter
     if (search) {
       filterQuery.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -25,21 +22,17 @@ export const getClients = async (req, res) => {
       ];
     }
 
-    // Add tag filter
     if (tag && tag !== "All Tags") {
       filterQuery.tags = { $in: [tag] };
     }
 
-    // Get total count for pagination
     const total = await Client.countDocuments(filterQuery);
 
-    // Get paginated clients
     const clients = await Client.find(filterQuery)
       .populate("assignedTo", "fullName email")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum);
-
     const totalPages = Math.ceil(total / limitNum);
 
     res.json({

@@ -31,12 +31,10 @@ const api = axios.create({
 });
 
 const API_BASE = api.defaults.baseURL + "/users";
- // adjust if your backend is mounted at a different path
 
 const mapServerUserToClient = (u) => {
   const fullName = u.fullName || u.name || "";
 
-  // handle relative vs absolute URL
   let avatarUrl = u.avatarUrl || u.profilePhoto || u.avatar || null;
   if (avatarUrl && !avatarUrl.startsWith("http")) {
     avatarUrl = `${import.meta.env.VITE_API_URL}${avatarUrl.startsWith("/") ? "" : "/"}${avatarUrl}`;
@@ -48,7 +46,6 @@ const mapServerUserToClient = (u) => {
     email: u.email,
     role: u.role || "Staff",
     status: u.status || "Active",
-    // <-- use companyName if present, otherwise company, otherwise empty string
     company: u.companyName ?? u.company ?? "",
     avatarUrl,
     initials: fullName ? fullName.charAt(0).toUpperCase() : "?",
@@ -67,13 +64,13 @@ const mapServerUserToClient = (u) => {
 
 
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("token"); // adjust key if you store token elsewhere
+  const token = localStorage.getItem("token"); 
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 const Settings = () => {
   const { user } = useAuth();
-  const [users, setUsers] = useState([]); // now loaded from server
+  const [users, setUsers] = useState([]); 
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -85,7 +82,7 @@ const Settings = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null); // stores id of user to delete
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null); 
   const [selectedUser, setSelectedUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -111,10 +108,8 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // compute deleting user (for modal display) — may be undefined if null
   const deletingUser = users.find((u) => u.id === showDeleteConfirm);
 
-  // Fetch users on mount and when page changes
   useEffect(() => {
   const fetchUsers = async () => {
     setLoading(true);
@@ -133,13 +128,11 @@ const Settings = () => {
         setTotalUsers(0);
       }
     } catch (err) {
-      // More detailed logging for debugging
       console.error("Failed to fetch users - full error:", err);
 
       const status = err?.response?.status;
       const serverMessage = err?.response?.data?.message || err?.response?.data || err.message;
 
-      // friendly UI message for common auth issues
       if (status === 401 || status === 403) {
         setError("You do not have permission to view all users. This endpoint is admin-only.");
       } else {
@@ -154,13 +147,11 @@ const Settings = () => {
 }, [currentPage]);
 
 
-  // Handle View Profile
   const handleViewProfile = (user) => {
     setSelectedUser(user);
     setShowProfileModal(true);
   };
 
-  // Handle Add User (calls API)
   const handleAddUser = async () => {
   if (!newUser.name || !newUser.email || !newUser.password) {
     alert("Please fill in all fields");
@@ -174,13 +165,12 @@ const Settings = () => {
       email: newUser.email,
       password: newUser.password,
       role: newUser.role,
-      company: newUser.company || "", // <-- include company when creating user
+      company: newUser.company || "", 
     };
     const res = await axios.post(API_BASE, payload, {
       headers: getAuthHeaders(),
     });
 
-      // the server responds with created user (res.data.user) or the user object directly
       const created = res.data.user || res.data;
     const mapped = mapServerUserToClient(created);
     setUsers((prev) => [...prev, mapped]);
@@ -195,7 +185,6 @@ const Settings = () => {
   }
 };
 
-  // Handle Edit User (open modal)
   const handleEditUser = (user) => {
     setSelectedUser(user);
     setEditUser({
@@ -208,7 +197,6 @@ const Settings = () => {
     setShowEditModal(true);
   };
 
-  // Save edit (calls API)
   const handleSaveEdit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!selectedUser) return;
@@ -240,7 +228,6 @@ const Settings = () => {
     }
   };
 
-  // Handle Delete User (calls API)
   const handleDeleteUser = async (id) => {
     try {
       setLoading(true);
@@ -269,9 +256,6 @@ const Settings = () => {
     return roleMatch && statusMatch && searchMatch;
   });
 
-  // Export to CSV functionality (client-side)
-  // Replace your existing handleExport with this (put near the other helpers in your Settings component)
-
 const convertToCSV = (rows) => {
   if (!Array.isArray(rows) || rows.length === 0) return "";
   const keys = Object.keys(rows[0]);
@@ -279,7 +263,6 @@ const convertToCSV = (rows) => {
   const escapeCell = (val) => {
     if (val === null || val === undefined) return "";
     const s = String(val);
-    // Escape double-quotes and wrap in quotes
     return `"${s.replace(/"/g, '""')}"`;
   };
   const csvRows = rows.map((r) => keys.map((k) => escapeCell(r[k])).join(","));
@@ -293,25 +276,19 @@ const handleExportAllUsers = async () => {
     return;
   }
 
-  setLoading(true); // optional UI feedback; you can create separate exporting state if preferred
+  setLoading(true);
   try {
-    // Try to fetch the latest full list of users from the server.
-    // If your backend paginates, replace with a dedicated export endpoint (e.g. /users/export).
     const res = await axios.get(API_BASE, {
       headers: getAuthHeaders(),
     });
 
-    // Server might return array or { users: [] }
     const rawUsers = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.users) ? res.data.users : []);
-    // Fallback to currently loaded "users" state if server responded unexpectedly
     const serverUsers = rawUsers.length ? rawUsers : users.map(u => ({ // convert back to raw-ish shape if needed
       _id: u.id, fullName: u.name, email: u.email, role: u.role, status: u.status,
       createdAt: u.joinDate, workSummary: u.workSummary
     }));
 
-    // Map to CSV-friendly objects (flatten)
     const csvRows = serverUsers.map((u) => {
-      // If we got server objects (not mapped to client), try to normalize
       const mapped = mapServerUserToClient(u);
       return {
         ID: mapped.id ?? "",
@@ -345,7 +322,6 @@ const handleExportAllUsers = async () => {
     URL.revokeObjectURL(url);
   } catch (err) {
     console.error("Failed to export users (full):", err?.response?.data ?? err.message);
-    // fallback: try to export the filteredUsers currently displayed
     if (filteredUsers && filteredUsers.length) {
       const fallbackRows = filteredUsers.map((m) => ({
         ID: m.id ?? "",
@@ -395,7 +371,6 @@ const handleExportAllUsers = async () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
 
-        {/* Main Content - Full Width */}
         <div className="flex-1 overflow-y-auto bg-white">
           {/* Header Section */}
           <motion.div
@@ -422,15 +397,13 @@ const handleExportAllUsers = async () => {
 
             {/* Right side - Buttons */}
             <div className="flex items-center gap-3 mr-6">
-              {/* Export Button */}
-              {/* Export Button */}
-<button
-  onClick={handleExportAllUsers}
-  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 px-4 py-2.5 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all duration-200"
->
-  <FaFileCsv className="w-4 h-4" />
-  <span>Export</span>
-</button>
+                <button
+                  onClick={handleExportAllUsers}
+                  className="flex items-center gap-2 bg-white border border-rose-200 text-rose-600 px-4 py-2.5 rounded-lg font-medium shadow-sm hover:bg-rose-50 transition-all duration-200"
+                >
+                  <FaFileCsv className="w-4 h-4" />
+                  <span>Export</span>
+                </button>
               {/* Add User Button */}
               <button
                 onClick={() => setShowAddModal(true)}
@@ -593,19 +566,19 @@ const handleExportAllUsers = async () => {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           {user.avatarUrl ? (
-  <img
-    src={user.avatarUrl}
-    alt={user.name}
-    className="w-10 h-10 rounded-full object-cover shadow-sm border border-rose-200"
-  />
-) : (
-  <div
-    className="w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold text-sm shadow-sm"
-    style={{ backgroundColor: user.color }}
-  >
-    {user.initials}
-  </div>
-)}
+                              <img
+                                src={user.avatarUrl}
+                                alt={user.name}
+                                className="w-10 h-10 rounded-full object-cover shadow-sm border border-rose-200"
+                              />
+                            ) : (
+                              <div
+                                className="w-10 h-10 flex items-center justify-center rounded-full text-white font-semibold text-sm shadow-sm"
+                                style={{ backgroundColor: user.color }}
+                              >
+                                {user.initials}
+                              </div>
+                            )}
 
                           <div>
                             <span className="text-base font-semibold text-gray-800 leading-tight">
@@ -763,19 +736,19 @@ const handleExportAllUsers = async () => {
                   {/* Avatar */}
                   <div className="flex flex-col items-center text-center space-y-2">
                    {selectedUser.avatarUrl ? (
-  <img
-    src={selectedUser.avatarUrl}
-    alt={selectedUser.name}
-    className="w-20 h-20 rounded-full object-cover shadow-md border-2 border-rose-200"
-  />
-) : (
-  <div
-    className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-md"
-    style={{ backgroundColor: selectedUser.color }}
-  >
-    {selectedUser.initials}
-  </div>
-)}
+                          <img
+                            src={selectedUser.avatarUrl}
+                            alt={selectedUser.name}
+                            className="w-20 h-20 rounded-full object-cover shadow-md border-2 border-rose-200"
+                          />
+                        ) : (
+                          <div
+                            className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-md"
+                            style={{ backgroundColor: selectedUser.color }}
+                          >
+                            {selectedUser.initials}
+                          </div>
+                        )}
 
                     <h3 className="text-xl font-bold text-gray-900">{selectedUser.name}</h3>
                     <p className="text-sm text-gray-500">{selectedUser.email}</p>

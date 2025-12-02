@@ -4,7 +4,7 @@ import { generateSummary } from "../controllers/aiController.js";
 
 const router = express.Router();
 
-// POST /api/dashboard/summary
+// dashboard summary
 router.post("/", authenticate, generateSummary);
 
 export default router;

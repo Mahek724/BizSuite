@@ -3,15 +3,11 @@ import Client from "../models/Client.js";
 import Task from "../models/Task.js";
 import Activity from "../models/Activity.js";
 
-/* ============================
-   📊 DASHBOARD CONTROLLER
-============================ */
 
-// Helper to calculate % change
 const pctChange = (current, prev) =>
   prev === 0 ? 100 : (((current - prev) / prev) * 100).toFixed(1);
 
-// ✅ Summary cards
+// Summary cards
 export const getSummary = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -71,7 +67,7 @@ export const getSummary = async (req, res) => {
   }
 };
 
-// GET → Leads by Stage (Pie chart)
+// GET Leads by Stage (Pie chart)
 export const getLeadsByStage = async (req, res) => {
   try {
     const filter = req.user.role === "Admin" ? {} : { createdBy: req.user._id };
@@ -95,7 +91,7 @@ export const getLeadsByStage = async (req, res) => {
   }
 };
 
-// GET → Leads by Source (Bar chart)
+// GET Leads by Source (Bar chart)
 export const getLeadsBySource = async (req, res) => {
   try {
     const filter = req.user.role === "Admin" ? {} : { createdBy: req.user._id };
@@ -121,7 +117,7 @@ export const getLeadsBySource = async (req, res) => {
   }
 };
 
-// GET → Sales Trend (Line chart)
+// GET Sales Trend (Line chart)
 export const getSalesTrend = async (req, res) => {
   try {
     const year = new Date().getFullYear();
@@ -150,7 +146,7 @@ export const getSalesTrend = async (req, res) => {
   }
 };
 
-// GET → Recent Activity timeline
+// GET Recent Activity timeline
 export const getRecentActivity = async (req, res) => {
   try {
     const { page = 1, limit = 6 } = req.query; // default 6 items per page

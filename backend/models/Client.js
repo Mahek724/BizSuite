@@ -7,8 +7,8 @@ const clientSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     company: { type: String, required: true },
     tags: [{ type: String }],
-    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // assigned user
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // who added client
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, 
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, 
   },
   { timestamps: true }
 );

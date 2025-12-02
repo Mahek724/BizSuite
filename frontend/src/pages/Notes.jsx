@@ -103,13 +103,12 @@ const Notes = () => {
       setLoading(false);
     };
 
-    fetchAllNotes(); // initial fetch
+    fetchAllNotes(); 
 
-    const interval = setInterval(fetchAllNotes, 30000); // refresh every 30 seconds
+    const interval = setInterval(fetchAllNotes, 30000); 
     return () => clearInterval(interval);
   }, [token]);
 
-  // Handle window resize for responsiveness
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
@@ -213,7 +212,6 @@ const Notes = () => {
       const res = await api.patch(`/notes/${noteId}/pin`, {}, {
         headers: {Authorization: `Bearer ${token}` },
       });
-      // Refresh both lists after pin toggle
       await Promise.all([
         fetchPinnedNotes(1),
         fetchUnpinnedNotes(1)
@@ -281,10 +279,6 @@ const Notes = () => {
   };
 
   
-
-  // -----------------------
-  // CSV Export helpers
-  // -----------------------
   const convertToCSV = (objArray) => {
     const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray || "[]");
     if (!array.length) return "";
@@ -294,7 +288,6 @@ const Notes = () => {
       keys
         .map(k => {
           const cell = row[k] ?? "";
-          // Escape double quotes and wrap in quotes
           return `"${String(cell).replace(/"/g, '""')}"`;
         })
         .join(",")
@@ -302,10 +295,6 @@ const Notes = () => {
     return [header, ...rows].join("\r\n");
   };
 
-  /**
-   * Export CSV for all currently listed notes (filteredNotes).
-   * Visible to Admin and Staff.
-   */
   const handleExportNotes = async () => {
     const role = (user?.role || "").toLowerCase();
     if (!(role === "admin" || role === "staff")) {
@@ -706,8 +695,6 @@ const Notes = () => {
         </div>
       </div>
 
-    
-
       {/* Add/Edit Modal */}
       <AnimatePresence>
   {(isAddFormOpen || isEditFormOpen) && (
@@ -776,45 +763,45 @@ const Notes = () => {
                 <FaTags className="text-rose-400" /> Category
               </label>
               <div className="relative">
-  <button
-    type="button"
-    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
-  >
-    {selectedNote?.category || "Select Category"}
-    <FaChevronDown
-      className={`transition-transform duration-300 ${
-        showCategoryDropdown ? "rotate-180" : ""
-      } text-gray-400`}
-    />
-  </button>
+              <button
+                type="button"
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
+              >
+                {selectedNote?.category || "Select Category"}
+                <FaChevronDown
+                  className={`transition-transform duration-300 ${
+                    showCategoryDropdown ? "rotate-180" : ""
+                  } text-gray-400`}
+                />
+              </button>
 
-  <AnimatePresence>
-    {showCategoryDropdown && (
-      <motion.ul
-        className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-      >
-        {categories
-          .filter((c) => c !== "All Categories")
-          .map((category) => (
-            <li
-              key={category}
-              onClick={() => {
-                setSelectedNote({ ...selectedNote, category });
-                setShowCategoryDropdown(false);
-              }}
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all"
-            >
-              {category}
-            </li>
-          ))}
-      </motion.ul>
-    )}
-  </AnimatePresence>
-</div>
+                <AnimatePresence>
+                  {showCategoryDropdown && (
+                    <motion.ul
+                      className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      {categories
+                        .filter((c) => c !== "All Categories")
+                        .map((category) => (
+                          <li
+                            key={category}
+                            onClick={() => {
+                              setSelectedNote({ ...selectedNote, category });
+                              setShowCategoryDropdown(false);
+                            }}
+                            className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all"
+                          >
+                            {category}
+                          </li>
+                        ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
 
             </div>
 
@@ -939,7 +926,6 @@ const Notes = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-3 p-6 border-t border-gray-100">
           <button
             onClick={closeModal}
@@ -984,7 +970,6 @@ const Notes = () => {
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-6">
           <p className="text-gray-600 mb-6 leading-relaxed">
             Are you sure you want to delete{" "}
@@ -994,7 +979,6 @@ const Notes = () => {
             This action cannot be undone.
           </p>
 
-          {/* Footer Buttons */}
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setDeleteConfirm(null)}

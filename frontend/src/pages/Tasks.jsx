@@ -82,13 +82,12 @@ const api = axios.create({
     return "";
   };
 
-  // Date formatting helper: returns a localized date/time string or null if invalid
   const formatDate = (dateValue) => {
     if (!dateValue) return null;
     try {
       const d = new Date(dateValue);
       if (Number.isNaN(d.getTime())) return null;
-      return d.toLocaleString(); // you can change options or toLocaleDateString/toLocaleTimeString if desired
+      return d.toLocaleString(); 
     } catch {
       return null;
     }
@@ -135,9 +134,6 @@ useEffect(() => {
   return () => window.removeEventListener('resize', handleResize);
 }, []);
 
-
-
-
   const handleAddTask = () => {
     setIsAddFormOpen(true);
     setSelectedTask({
@@ -169,7 +165,6 @@ useEffect(() => {
       const fetchedTasks = res.data.tasks;
       const paginationData = res.data.pagination;
 
-      // Remove duplicates by ID (though backend should handle this)
       const uniqueTasks = fetchedTasks.filter(
         (task, index, self) =>
           index === self.findIndex((t) => t._id === task._id)
@@ -208,12 +203,10 @@ useEffect(() => {
     };
 
     if (selectedTask._id) {
-      // 🔄 Update task
       const res = await api.put(`/tasks/${selectedTask._id}`, selectedTask, config);
       setTasks(tasks.map((t) => (t._id === selectedTask._id ? res.data : t)));
       setIsEditFormOpen(false);
     } else {
-      // ➕ Create new task
       const res = await api.post("/tasks", selectedTask, config);
       setTasks([...tasks, res.data]);
       setIsAddFormOpen(false);
@@ -257,7 +250,6 @@ useEffect(() => {
     const taskToUpdate = tasks.find((t) => t._id === taskId);
     if (!taskToUpdate) return;
 
-    // 🔁 Determine next status automatically
     let nextStatus = "pending";
     if (taskToUpdate.status === "pending") nextStatus = "in-progress";
     else if (taskToUpdate.status === "in-progress") nextStatus = "completed";
@@ -265,12 +257,10 @@ useEffect(() => {
 
     const updatedTask = { ...taskToUpdate, status: nextStatus };
 
-    // ✅ Update in backend
     await api.put(`/tasks/${taskId}`, updatedTask, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    // ✅ Update frontend state
     setTasks(tasks.map((t) => (t._id === taskId ? updatedTask : t)));
 
     console.log(`✅ Task "${taskToUpdate.title}" status updated to ${nextStatus}`);
@@ -278,8 +268,6 @@ useEffect(() => {
     console.error("❌ Error updating task status:", error);
   }
 };
-
-
 
   const closeModal = () => {
     setIsAddFormOpen(false);
@@ -326,16 +314,11 @@ useEffect(() => {
     }
   };
 
-  // Add this below your filters useState
   const [isDropdownOpen, setIsDropdownOpen] = useState({
     status: false,
     priority: false,
     staff: false,
   });
-
-  // -----------------------
-  // CSV Export helpers
-  // -----------------------
   const convertToCSV = (objArray) => {
     const array = Array.isArray(objArray) ? objArray : JSON.parse(objArray || "[]");
     if (!array.length) return "";
@@ -345,7 +328,6 @@ useEffect(() => {
       keys
         .map(k => {
           const cell = row[k] ?? "";
-          // Escape double quotes and wrap in quotes
           return `"${String(cell).replace(/"/g, '""')}"`;
         })
         .join(",")
@@ -353,12 +335,7 @@ useEffect(() => {
     return [header, ...rows].join("\r\n");
   };
 
-  /**
-   * Export currently listed tasks (filteredTasks) as CSV.
-   * Visible to Admin and Staff.
-   */
   const handleExportTasks = async () => {
-    // allow admin or staff
     const role = (user?.role || "").toLowerCase();
     if (!(role === "admin" || role === "staff")) {
       alert("Export allowed for Admin or Staff only.");
@@ -382,12 +359,10 @@ useEffect(() => {
         AssignedTo: t.assignedTo || "",
         CreatedAt: formatDate(t.createdAt || t.created_at) || "",
         UpdatedAt: formatDate(t.updatedAt || t.updated_at) || "",
-        // add additional fields if you want, e.g. notes or id
         ID: t._id || t.id || "",
       }));
 
       const csv = convertToCSV(csvData);
-      // prepend BOM for Excel compatibility
       const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -669,52 +644,51 @@ useEffect(() => {
                 <tbody>
                   {filteredTasks.map((task) => (
                  <motion.tr
-  key={task._id}
-  className={`border-b border-gray-100 transition-all duration-500 ease-in-out ${
-    task.status === "completed"
-      ? "opacity-60 blur-[1px] hover:opacity-100 hover:blur-0"
-      : "hover:bg-rose-50"
-  }`}
-                      variants={{
+                      key={task._id}
+                      className={`border-b border-gray-100 transition-all duration-500 ease-in-out ${
+                        task.status === "completed"
+                          ? "opacity-60 blur-[1px] hover:opacity-100 hover:blur-0"
+                          : "hover:bg-rose-50"
+                      }`}
+                variants={{
                         hidden: { opacity: 0, y: 10 },
                         show: { opacity: 1, y: 0 },
                       }}
                     >
-                      {/* ✅ Title + Checkbox (updated to reduce title size and constrain width) */}
-<td className="py-3 px-4">
-  <div className="flex items-start gap-3">
-    {/* Status Icon (no button, just an icon) */}
-    {task.completed ? (
-      <FaCheckCircle className="text-rose-500 w-5 h-5 mt-1" />
-    ) : (
-      <FaRegCircle className="text-rose-300 w-5 h-5 mt-1" />
-    )}
+                        <td className="py-3 px-4">
+                          <div className="flex items-start gap-3">
+                            {/* Status Icon (no button, just an icon) */}
+                            {task.completed ? (
+                              <FaCheckCircle className="text-rose-500 w-5 h-5 mt-1" />
+                            ) : (
+                              <FaRegCircle className="text-rose-300 w-5 h-5 mt-1" />
+                            )}
 
-    {/* Title + Description */}
-    <div className="flex flex-col gap-0.5 min-w-0">
-      {/* Title */}
-      <h4
-        className={`text-base font-medium text-gray-800 leading-none ${
-          task.completed ? "line-through text-gray-500" : ""
-        } truncate`}
-        style={{ maxWidth: "48ch" }}
-        title={task.title}
-      >
-        {task.title}
-      </h4>
+                            {/* Title + Description */}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              {/* Title */}
+                              <h4
+                                className={`text-base font-medium text-gray-800 leading-none ${
+                                  task.completed ? "line-through text-gray-500" : ""
+                                } truncate`}
+                                style={{ maxWidth: "48ch" }}
+                                title={task.title}
+                              >
+                                {task.title}
+                              </h4>
 
-      {/* Description (tight spacing) */}
-      <p
-        className={`text-xs text-gray-500 leading-tight ${
-          task.completed ? "line-through text-gray-400" : ""
-        } truncate`}
-        style={{ maxWidth: "60ch" }}
-      >
-        {task.description}
-      </p>
-    </div>
-  </div>
-</td>
+                              {/* Description (tight spacing) */}
+                              <p
+                                className={`text-xs text-gray-500 leading-tight ${
+                                  task.completed ? "line-through text-gray-400" : ""
+                                } truncate`}
+                                style={{ maxWidth: "60ch" }}
+                              >
+                                {task.description}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
 
                       {/* Due Date */}
                       <td className="py-3 px-4 text-gray-800 whitespace-nowrap">
@@ -782,13 +756,13 @@ useEffect(() => {
                             <FaEdit />
                           </button>
                           {user?.role?.toLowerCase() !== "staff" && (
-  <button
-    className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
-    onClick={() => handleDeleteConfirm(task)}
-  >
-    <FaTrash />
-  </button>
-)}
+                              <button
+                                className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all"
+                                onClick={() => handleDeleteConfirm(task)}
+                              >
+                                <FaTrash />
+                              </button>
+                            )}
                         </div>
                       </td>
                     </motion.tr>
@@ -882,43 +856,43 @@ useEffect(() => {
 
   </div>
 
-                {/* Description */}
-                <div>
-    <label className="block text-gray-700 font-semibold mb-1">
-      Description
-    </label>
-    <textarea
-      rows="3"
-      value={selectedTask?.description || ""}
-      onChange={(e) =>
-        setSelectedTask({ ...selectedTask, description: e.target.value })
-      }
-      className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
-    ></textarea>
-  </div>
+                              {/* Description */}
+                              <div>
+                  <label className="block text-gray-700 font-semibold mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    rows="3"
+                    value={selectedTask?.description || ""}
+                    onChange={(e) =>
+                      setSelectedTask({ ...selectedTask, description: e.target.value })
+                    }
+                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                  ></textarea>
+                </div>
 
                 {/* Due Date & Priority */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Due Date */}
                  <div>
-    <label className="block text-gray-700 font-semibold mb-1">
-      Due Date
-    </label>
-    <input
-  type="date"
-  value={selectedTask?.dueDate || ""}
-  onChange={(e) =>
-    setSelectedTask({ ...selectedTask, dueDate: e.target.value })
-  }
-  disabled={user?.role?.toLowerCase() === "staff"} // ✅ disable for staff
-  className={`w-full border-2 rounded-lg px-3 py-2 text-sm focus:outline-none ${
-    user?.role?.toLowerCase() === "staff"
-      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-      : "focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
-  }`}
-/>
+                        <label className="block text-gray-700 font-semibold mb-1">
+                          Due Date
+                        </label>
+                        <input
+                      type="date"
+                      value={selectedTask?.dueDate || ""}
+                      onChange={(e) =>
+                        setSelectedTask({ ...selectedTask, dueDate: e.target.value })
+                      }
+                      disabled={user?.role?.toLowerCase() === "staff"} // ✅ disable for staff
+                      className={`w-full border-2 rounded-lg px-3 py-2 text-sm focus:outline-none ${
+                        user?.role?.toLowerCase() === "staff"
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                          : "focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+                      }`}
+                    />
 
-  </div>
+                      </div>
 
                   {/* Priority Dropdown */}
                   <div className="relative">
@@ -969,55 +943,55 @@ useEffect(() => {
                 </div>
 
                 {/* Status Dropdown */}
-<div className="relative">
-  <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
-    <FaInfoCircle className="text-rose-400" /> Status
-  </label>
-  <button
-    type="button"
-    onClick={() =>
-      setIsDropdownOpen((prev) => ({
-        ...prev,
-        statusField: !prev.statusField,
-      }))
-    }
-    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
-  >
-    {selectedTask?.status || "Select Status"}
-    <FaChevronDown
-      className={`transition-transform duration-300 ${
-        isDropdownOpen.statusField ? "rotate-180" : ""
-      } text-gray-400`}
-    />
-  </button>
+                  <div className="relative">
+                    <label className="flex items-center gap-2 text-gray-700 font-semibold mb-1">
+                      <FaInfoCircle className="text-rose-400" /> Status
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsDropdownOpen((prev) => ({
+                          ...prev,
+                          statusField: !prev.statusField,
+                        }))
+                      }
+                      className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-all cursor-pointer bg-white"
+                    >
+                      {selectedTask?.status || "Select Status"}
+                      <FaChevronDown
+                        className={`transition-transform duration-300 ${
+                          isDropdownOpen.statusField ? "rotate-180" : ""
+                        } text-gray-400`}
+                      />
+                    </button>
 
-  <AnimatePresence>
-    {isDropdownOpen.statusField && (
-      <motion.ul
-        className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-      >
-        {["pending", "in-progress", "completed"].map((status) => (
-          <li
-            key={status}
-            onClick={() => {
-              setSelectedTask({ ...selectedTask, status });
-              setIsDropdownOpen((prev) => ({
-                ...prev,
-                statusField: false,
-              }));
-            }}
-            className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all capitalize"
-          >
-            {status}
-          </li>
-        ))}
-      </motion.ul>
-    )}
-  </AnimatePresence>
-</div>
+                    <AnimatePresence>
+                      {isDropdownOpen.statusField && (
+                        <motion.ul
+                          className="absolute left-0 right-0 mt-2 bg-white border border-rose-100 rounded-lg shadow-lg z-20"
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                        >
+                          {["pending", "in-progress", "completed"].map((status) => (
+                            <li
+                              key={status}
+                              onClick={() => {
+                                setSelectedTask({ ...selectedTask, status });
+                                setIsDropdownOpen((prev) => ({
+                                  ...prev,
+                                  statusField: false,
+                                }));
+                              }}
+                              className="px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 cursor-pointer transition-all capitalize"
+                            >
+                              {status}
+                            </li>
+                          ))}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
 
                 {/* Assigned To */}

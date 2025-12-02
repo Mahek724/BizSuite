@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext"; // get api via hook
+import { useAuth } from "../context/AuthContext"; 
 import "../assets/css/forgotPassword.css";
 
 export default function ForgotPassword() {
-  const { api } = useAuth(); // get api instance
+  const { api } = useAuth(); 
   const [email, setEmail] = useState("");
 
   const onSubmit = async (e) => {
