@@ -6,8 +6,6 @@ This document summarizes the four Jest + Supertest server-side test files:
 - client.test.js
 - notes.test.js
 
-It explains each file's purpose, the common test scaffolding & mocks, the individual tests and their key assertions, and recommended improvements / next steps.
-
 ---
 
 ## Quick overview (common patterns)
@@ -57,10 +55,6 @@ Tests (6)
    - Mocks adding a comment to an activity, then returns populated comments.
    - Expects returned array containing the comment text.
 
-Notes / Observations
-- Good coverage of main happy paths and admin-notify side-effect.
-- Uses flexible `equals` implementations to simulate mongoose behavior on arrays.
-
 ---
 
 ### auth.test.js
@@ -93,11 +87,6 @@ Tests (13)
   12. /login exists → asserts route is mounted.
   13. GET /me returns user:null without token (duplicate of GET /me test route-level).
 
-Notes / Observations
-- Extensive middleware coverage.
-- Good coverage of success and error cases for auth flows.
-- jwt.sign mocked to ensure token behavior can be asserted without real JWTs.
-
 ---
 
 ### client.test.js
@@ -116,10 +105,6 @@ Tests (6)
 4. PUT /api/clients/:id updates and returns updated client.
 5. DELETE /api/clients/:id deletes and returns confirmation message.
 6. GET /api/clients/tags/assigned returns aggregated tags for Admin and filtered tags for Staff (two sub-cases).
-
-Notes / Observations
-- Tests include role switching for currentUser to simulate access control behavior.
-- Notification side-effect asserted on create.
 
 ---
 
@@ -140,10 +125,6 @@ Tests (6)
 5. PATCH /api/notes/:id/pin toggles pin state and returns populated note with `isPinnedByUser` boolean; tests both pinning and unpinning branches.
 6. GET /api/notes/pinned and /api/notes/unpinned return lists and pagination.
 
-Notes / Observations
-- Ownership checks are well covered.
-- The toggling logic tests both the case where the user pins and unpins.
-
 ---
 
 ## Test counts
@@ -156,31 +137,4 @@ Total: 31 tests
 
 ---
 
-## Strengths observed
-- Good use of role-switching with `currentUser` to exercise authorization branches.
-- sendNotification side-effects are mocked and asserted — ensures notification logic is triggered without external ops.
-- Chainable query mocks emulate mongoose patterns and allow testing pagination/listing endpoints.
-- Middleware unit tests (authenticate / requireAdmin) are explicit and cover error branches.
-- Ownership and access control logic for notes/clients is explicitly tested.
 
----
-
-## Gaps & suggested improvements
-1. Negative / error-path coverage
-   - Simulate DB failures (e.g., find throws) and assert 500 or appropriate error handling.
-   - Test validation errors for malformed payloads (missing required fields).
-2. More assertion on side-effects
-   - Assert payloads passed to sendNotification (not just call count).
-   - When new resources are created, assert event shape and assigned user retrieval logic more precisely.
-3. Consistency & isolation
-   - Ensure `currentUser` is reset between tests or use afterEach to restore a known baseline (some tests explicitly restore; consider a consistent pattern).
-4. Integration / E2E
-   - Consider a small set of integration tests against a real test DB (mongodb-memory-server) to validate actual mongoose queries and schema behavior.
-5. Coverage thresholds & CI
-   - Add coverage reporting and thresholds to fail CI if critical areas regress.
-6. Input sanitization & security
-   - Tests for permission escalation attempts, verifying fields ignored or sanitized server-side.
-7. Repeated route checks
-   - Some route-level /me tests are duplicated — consolidate or make unique assertions.
-
----

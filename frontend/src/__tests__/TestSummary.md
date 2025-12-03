@@ -6,8 +6,6 @@ This document summarizes the four frontend test files:
 - auth.test.jsx
 - note.test.jsx
 
-It describes each file's purpose, key mocks/setup, individual tests and assertions, edge cases covered, and suggestions for improvements.
-
 ---
 
 ## Quick overview (common patterns)
@@ -43,10 +41,6 @@ Tests (2):
 2. "renders pinned and recent items"
    - Asserts pinned and recent item titles appear (`Pinned A`, `Recent A`).
 
-Notes & suggestions:
-- Good coverage of happy paths and header authorization.
-- Missing tests: error responses / loading state, pagination, clicking an activity to open details, UI when no activities are present.
-
 ---
 
 ## client.test.jsx
@@ -73,10 +67,6 @@ Tests (3):
    - Mocks `URL.createObjectURL`, spies on `document.body.appendChild`.
    - Clicks Export CSV and asserts no file download was attempted (createObjectURL not called and no appendChild with download link).
    - Restores appendChild spy.
-
-Notes & suggestions:
-- Good for UI flow and defensive behavior for empty data exports.
-- Missing tests: actual CSV content generation, error cases when fetching staff or clients fail, validating Add Client submission flow.
 
 ---
 
@@ -107,10 +97,6 @@ Tests (6):
 6. "Remember me checkbox toggles"
    - Verifies default checked state then toggles and asserts change.
 
-Notes & suggestions:
-- Good scoping technique to avoid ambiguous inputs when login and signup forms coexist.
-- Could extend tests to cover form validation, password strength, error messages per-field, token storage and redirect after login, and accessibility checks (aria, labels).
-
 ---
 
 ## note.test.jsx
@@ -139,10 +125,6 @@ Tests (5):
    - Mocks global.alert and clicks Export CSV; expects alert "No notes available to export."
 5. (Implicit) test coverage includes post/patch/delete mocks to assert requests are attempted.
 
-Notes & suggestions:
-- Tests carefully scope modal and card interactions to avoid ambiguity — good practice.
-- Missing tests: editing a note, deleting a note confirmation, handling patch/post errors, verifying exported CSV contents when notes exist.
-
 ---
 
 ## Test counts (per file)
@@ -152,16 +134,5 @@ Notes & suggestions:
 - note.test.jsx: 5 tests
 
 Total: 16 tests
-
----
-
-## Suggested improvements & next steps
-- Add negative-path tests (network failures, 4xx/5xx responses) to ensure graceful UI error handling.
-- Add tests for loading and empty states consistently for all pages.
-- Add tests that validate exported CSV contents (generate expected CSV string and assert blob/content).
-- Add tests for form submissions where applicable (Clients: Add Client; Notes: edit/delete flows).
-- Consider adding end-to-end or integration tests for flows that span multiple components (e.g., creating a client then searching).
-- Add code coverage checks and add a coverage badge to README / CI to track progress.
-- Ensure spies/mocks are restored after each test to avoid cross-test interference (some tests already restore spies).
 
 ---
