@@ -236,14 +236,30 @@ useEffect(() => {
   };
 
   const handleDelete = async () => {
-    try {
-      await api.delete(`/tasks/${deleteConfirm._id}`);
-      setTasks(tasks.filter((t) => t._id !== deleteConfirm._id));
-      setDeleteConfirm(null);
-    } catch (err) {
-      console.error("❌ Delete failed:", err.response?.data || err.message);
+  try {
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token") ||
+      user?.token;
+
+    if (!token) {
+      console.error("❌ No token found for delete");
+      return;
     }
-  };
+
+    await api.delete(`/tasks/${deleteConfirm._id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setTasks(tasks.filter((t) => t._id !== deleteConfirm._id));
+    setDeleteConfirm(null);
+  } catch (err) {
+    console.error("❌ Delete failed:", err.response?.data || err.message);
+  }
+};
+
 
   const handleToggleComplete = async (taskId) => {
   try {
